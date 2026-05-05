@@ -5,7 +5,7 @@ class Client(TenantMixin):
     
     name = models.CharField(max_length=255)
     license_number = models.CharField(max_length=100, unique=True)
-    state = models.CharField(max_length=2)
+    state = models.CharField(max_length=50)
     company_type = models.CharField(max_length=50, choices=[
         ('general_contractor', 'General Contractor'),
         ('developer', 'Developer'),

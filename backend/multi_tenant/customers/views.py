@@ -42,12 +42,12 @@ class CompanySignupView(APIView):
 
         # Create admin user inside tenant
         with schema_context(schema_name):
-            from accounts.models import UserProfile
+            from accounts.models import User
 
-            UserProfile.objects.create_user(
+            User.objects.create_user(
                 email=data['manager_email'],
-                full_name=data['manager_name'],
-                password=data['password'],   # ✅ directly pass password
+                name=data['manager_name'],
+                password=data['password'],  
                 role='company_admin',
                 is_active=True
             )
