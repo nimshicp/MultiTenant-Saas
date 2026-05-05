@@ -3,6 +3,10 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 SECRET_KEY = 'django-insecure-replace-in-production'
 DEBUG = True
@@ -106,7 +110,7 @@ COOKIE_SECURE = False  # True in production (HTTPS)
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
-REFRESH_TOKEN_LIFETIME = 7 * 24 * 60 * 60  # 7 days (seconds)
+REFRESH_TOKEN_LIFETIME = 7 * 24 * 60 * 60  
 
 
 MIDDLEWARE = [
@@ -125,17 +129,18 @@ ROOT_URLCONF = 'multi_tenant.urls'
 WSGI_APPLICATION = 'multi_tenant.wsgi.application'
 
 
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django_tenants.postgresql_backend',
-        'NAME': 'multi_tenant_db',
-        'USER': 'postgres',
-        'PASSWORD': 'nims@123',
-        'HOST': 'localhost',
-        'PORT': '5433',
+        'NAME': os.getenv("DB_NAME", "multi_tenant_db"),
+        'USER': os.getenv("DB_USER", "postgres"),
+        'PASSWORD': os.getenv("DB_PASSWORD", ""),
+        'HOST': os.getenv("DB_HOST", "localhost"),
+        'PORT': os.getenv("DB_PORT", "5433"),
     }
 }
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -173,14 +178,23 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend"
+)
 
-EMAIL_HOST_USER = 'nimshicp2003@gmail.com'
-EMAIL_HOST_PASSWORD = 'mwmghwvxnfmzcblp'
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    EMAIL_HOST_USER
+)
 
