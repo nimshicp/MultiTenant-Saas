@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -49,6 +49,7 @@ SHARED_APPS = [
     
     'corsheaders',
 ]
+
 
 TENANT_APPS = [
     'accounts',
