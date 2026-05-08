@@ -38,6 +38,7 @@ SHARED_APPS = [
     'django_tenants',
     'customers',
     'platform_admin',
+    'authentication',
 
     'django.contrib.contenttypes',
     'django.contrib.auth',
@@ -66,7 +67,8 @@ DATABASE_ROUTERS = (
 )
 
 
-AUTH_USER_MODEL = 'accounts.User'
+# AUTH_USER_MODEL = 'accounts.User'
+# AUTH_USER_MODEL = "platform_admin.PlatformUser"
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  

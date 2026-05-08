@@ -18,7 +18,7 @@ class IsCompanyAdmin(BasePermission):
     - Assign projects
     """
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "company_admin"
+        return request.user.is_authenticated and request.user.role == "company admin"
 
 
 class IsProjectManager(BasePermission):
@@ -27,7 +27,7 @@ class IsProjectManager(BasePermission):
     - View assigned projects
     """
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "project_manager"
+        return request.user.is_authenticated and request.user.role == "project manager"
 
 
 class IsAdminOrPM(BasePermission):
@@ -37,6 +37,6 @@ class IsAdminOrPM(BasePermission):
     """
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role in [
-            "company_admin",
-            "project_manager"
+            "company admin",
+            "project manager"
         ]

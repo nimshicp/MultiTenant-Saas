@@ -1,26 +1,44 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from django.core.exceptions import ValidationError
-from .managers import UserManager
 
-class User(AbstractBaseUser, PermissionsMixin):
+class TenantUser(AbstractUser):
+
     ROLE_CHOICES = (
-        ('company_admin', 'Company Admin'),
-        ('project_manager', 'Project Manager'),
+        ("COMPANY_ADMIN", "Company Admin"),
+        ("PROJECT_MANAGER", "Project Manager"),
     )
 
-    email = models.EmailField(unique=True)
-    name = models.CharField(max_length=100)
-    role = models.CharField(max_length=30, choices=ROLE_CHOICES)
+    role = models.CharField(
+        max_length=30,
+        choices=ROLE_CHOICES
+    )
 
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    email = models.EmailField()
 
-    objects = UserManager()
+    USERNAME_FIELD = "email"
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name']
+    REQUIRED_FIELDS = ["username"]
 
     def __str__(self):
-        return f"{self.name} ({self.email})"
+        return self.email
+
+
+class TenantProfile(models.Model):
+
+
+    user = models.OneToOneField(
+        TenantUser,
+        on_delete=models.CASCADE,
+        related_name="profile"
+    )
+
+    phone = models.CharField(max_length=15)
+
+    designation = models.CharField(max_length=100)
+
+    
+
+
+    def __str__(self):
+        return self.user.email
+
