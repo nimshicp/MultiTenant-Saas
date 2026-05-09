@@ -29,16 +29,25 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
 ]
 
-
 PUBLIC_SCHEMA_NAME = 'public'
 PUBLIC_SCHEMA_URLCONF = 'multi_tenant.public_urls'
+TENANT_URLCONF = 'multi_tenant.urls'
+
 SHOW_PUBLIC_IF_NO_TENANT_FOUND = True
+
+
+ROOT_URLCONF = 'multi_tenant.urls'
+
+
+
+# ... existing code above ...
 
 SHARED_APPS = [
     'django_tenants',
     'customers',
     'platform_admin',
     'authentication',
+    'accounts', 
 
     'django.contrib.contenttypes',
     'django.contrib.auth',
@@ -47,17 +56,28 @@ SHARED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    
     'corsheaders',
 ]
 
-
 TENANT_APPS = [
-    'accounts',
+    'django.contrib.contenttypes',
+    'accounts', 
     'rest_framework_simplejwt.token_blacklist',
 ]
 
-INSTALLED_APPS = SHARED_APPS + TENANT_APPS
+INSTALLED_APPS = []
+for app in SHARED_APPS:
+    if app not in INSTALLED_APPS:
+        INSTALLED_APPS.append(app)
+
+for app in TENANT_APPS:
+    if app not in INSTALLED_APPS:
+        INSTALLED_APPS.append(app)
+
+# Ensure this matches your unified model class name in accounts/models.py
+AUTH_USER_MODEL = 'accounts.User' 
+
+
 
 TENANT_MODEL = "customers.Client"
 TENANT_DOMAIN_MODEL = "customers.Domain"
@@ -67,8 +87,6 @@ DATABASE_ROUTERS = (
 )
 
 
-# AUTH_USER_MODEL = 'accounts.User'
-# AUTH_USER_MODEL = "platform_admin.PlatformUser"
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  
@@ -117,8 +135,8 @@ REFRESH_TOKEN_LIFETIME = 7 * 24 * 60 * 60
 
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'django_tenants.middleware.main.TenantMainMiddleware',
+    'corsheaders.middleware.CorsMiddleware',              
+    'django_tenants.middleware.main.TenantMainMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -128,7 +146,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'multi_tenant.urls'
 WSGI_APPLICATION = 'multi_tenant.wsgi.application'
 
 
@@ -200,4 +217,3 @@ DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL",
     EMAIL_HOST_USER
 )
-

@@ -1,57 +1,24 @@
 from rest_framework import serializers
-
-from .models import TenantUser
-from .models import TenantProfile
+from .models import User, UserProfile
 
 class UserProfileSerializer(serializers.ModelSerializer):
-
-
     class Meta:
-        model = TenantProfile
-        fields = "__all__"
-
+        model = UserProfile
+        fields = ["phone", "designation"]
 
 class UserSerializer(serializers.ModelSerializer):
-
     profile = UserProfileSerializer(read_only=True)
 
     class Meta:
-        model = TenantUser
-        fields = [
-            "id",
-            "email",
-            "username",
-            "role",
-            "profile"
-        ]
-    
+        model = User
+        fields = ["id", "email", "username", "name", "role", "profile"]
 
-class CreateProjectManagerSerializer(serializers.ModelSerializer):
-
-
+class CreateUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
-        model = TenantUser
-        fields = [
-            "email",
-            "username",
-            "password"
-        ]
+        model = User
+        fields = ["email", "username", "name", "password", "role"]
 
     def create(self, validated_data):
-
-        user = TenantUser.objects.create_user(
-            email=validated_data["email"],
-            username=validated_data["username"],
-            password=validated_data["password"],
-            role="PROJECT_MANAGER"
-        )
-
-        TenantProfile.objects.create(
-            user=user,
-            designation="Project Manager"
-        )
-
-        return user
-
+        return User.objects.create_user(**validated_data)

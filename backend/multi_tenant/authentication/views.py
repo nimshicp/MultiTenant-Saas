@@ -1,173 +1,82 @@
 from django.conf import settings
-from django.contrib.auth import authenticate
 from django.db import connection
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (
+AllowAny,
+IsAuthenticated
+)
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from platform_admin.models import PlatformUser
-
-from platform_admin.serializers import (
-PlatformUserSerializer
-)
-
-from accounts.serializers import (
-UserSerializer
-)
-
-from .models import TenantUserMap
+from accounts.models import User
+from accounts.serializers import UserSerializer
 
 from .serializers import LoginSerializer
 
+from django.conf import settings
+from django.db import connection
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
+from accounts.models import User
+from accounts.serializers import UserSerializer
+from .serializers import LoginSerializer
+
+from django.conf import settings
+from django.db import connection
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
+from accounts.models import User
+from accounts.serializers import UserSerializer
+from .serializers import LoginSerializer
+
 class LoginView(APIView):
-
-
     permission_classes = [AllowAny]
 
     def post(self, request):
-
-        serializer = LoginSerializer(
-            data=request.data
-        )
-
+        serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        company = serializer.validated_data["company"]
-
         email = serializer.validated_data["email"]
-
         password = serializer.validated_data["password"]
 
-        # SUPER ADMIN LOGIN
+        # TenantMainMiddleware has already switched the schema 
+        # based on the hostname (e.g., myntra.localhost)
+        user = User.objects.filter(email=email).first()
 
-        platform_user = PlatformUser.objects.filter(
-            email=email
-        ).first()
+        if not user or not user.check_password(password):
+            return Response({"error": "Invalid credentials"}, status=401)
 
-        if platform_user:
-
-            user = authenticate(
-                username=email,
-                password=password
-            )
-
-            if not user:
-
-                return Response({
-                    "error": "Invalid credentials"
-                }, status=401)
-
-            refresh = RefreshToken.for_user(user)
-
-            response = Response({
-
-                "access":
-                    str(refresh.access_token),
-
-                "user":
-                    PlatformUserSerializer(user).data,
-
-                "user_type":
-                    "SUPER_ADMIN"
-            })
-
-            response.set_cookie(
-
-                key="refresh_token",
-
-                value=str(refresh),
-
-                httponly=True,
-
-                secure=settings.COOKIE_SECURE,
-
-                samesite="Lax",
-
-                max_age=settings.REFRESH_TOKEN_LIFETIME
-            )
-
-            return response
-
-        # TENANT USER LOGIN
-
-        mapping = TenantUserMap.objects.filter(
-
-            email=email,
-
-            schema_name=company
-
-        ).first()
-
-        if not mapping:
-
-            return Response({
-
-                "error": "Tenant not found"
-
-            }, status=404)
-
-        # SWITCH SCHEMA
-
-        connection.set_schema(
-            mapping.schema_name
-        )
-
-        # AUTHENTICATE USER
-
-        user = authenticate(
-
-            username=email,
-
-            password=password
-        )
-
-        if not user:
-
-            return Response({
-
-                "error": "Invalid credentials"
-
-            }, status=401)
-
+        # Generate JWT Tokens
         refresh = RefreshToken.for_user(user)
 
+        # Prepare base response
+        user_type = "SUPER_ADMIN" if connection.schema_name == "public" else "TENANT_USER"
+        
         response = Response({
-
-            "access":
-                str(refresh.access_token),
-
-            "user":
-                UserSerializer(user).data,
-
-            "user_type":
-                "TENANT_USER",
-
-            "schema_name":
-                mapping.schema_name
+            "access": str(refresh.access_token),
+            "user": UserSerializer(user).data,
+            "user_type": user_type,
+            "schema_name": connection.schema_name
         })
 
+        # Set Refresh Token in HttpOnly Cookie
         response.set_cookie(
-
             key="refresh_token",
-
             value=str(refresh),
-
             httponly=True,
-
-            secure=settings.COOKIE_SECURE,
-
+            secure=not settings.DEBUG,  # True in production (HTTPS), False in dev
             samesite="Lax",
-
-            max_age=settings.REFRESH_TOKEN_LIFETIME
+            max_age=settings.REFRESH_TOKEN_LIFETIME # Uses the 7 days from your settings
         )
 
         return response
-
-
+    
 class LogoutView(APIView):
 
 
@@ -179,7 +88,8 @@ class LogoutView(APIView):
 
             "success": True,
 
-            "message": "Logged out successfully"
+            "message":
+                "Logged out successfully"
         })
 
         response.delete_cookie(
@@ -230,7 +140,7 @@ class RefreshTokenView(APIView):
             return Response({
 
                 "error":
-                    "Invalid refresh token"
+                    "Invalid or expired refresh token"
 
             }, status=401)
 
