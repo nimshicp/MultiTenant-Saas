@@ -13,4 +13,9 @@ urlpatterns = [
 
     path('password-reset/', views.RequestPasswordResetAPIView.as_view(), name='password-reset-request'),
     path('password-reset-confirm/<str:token>/', views.ConfirmPasswordResetAPIView.as_view(), name='password-reset-confirm'),
+
+    # MFA
+    path('mfa/setup/', views.SetUpMFAAPIView.as_view(), name='mfa-setup'),
+    path('mfa/verify-setup/', views.VerifyMFASetupAPIView.as_view(), name='mfa-verify-setup'),
+    path('mfa/verify-login/', views.VerifyMFALoginAPIView.as_view(), name='mfa-verify-login'),
 ]

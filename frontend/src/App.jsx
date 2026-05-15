@@ -16,6 +16,7 @@ import AcceptInvitation from "./pages/AcceptInvitation";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import LandingPage from "./pages/LandingPage";
+import Security from "./pages/Security";
 
 // Layout & Protection
 import MainLayout from "./components/layout/MainLayout";
@@ -98,6 +99,9 @@ function App() {
                 <EmployeeDashboard />
               </RoleRoute>
             } />
+
+            {/* COMMON Routes */}
+            <Route path="/security" element={<Security />} />
 
           </Route>
 

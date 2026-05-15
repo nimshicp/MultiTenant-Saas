@@ -1,5 +1,5 @@
+import pyotp
 import uuid
-# import pyotp
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
@@ -36,14 +36,27 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # MFA fields
+    is_mfa_enabled = models.BooleanField(default=False)
+    mfa_secret = models.CharField(max_length=32, blank=True, null=True)
+
     objects = UserManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
-    # MFA fields (enable when needed)
-    # is_mfa_enabled = models.BooleanField(default=False)
-    # mfa_secret = models.CharField(max_length=32, blank=True, null=True)
+    def generate_mfa_secret(self):
+        if not self.mfa_secret:
+            self.mfa_secret = pyotp.random_base32()
+            self.save()
+
+    def get_totp_uri(self):
+        if not self.mfa_secret:
+            self.generate_mfa_secret()
+        return pyotp.totp.TOTP(self.mfa_secret).provisioning_uri(
+            name=self.email, 
+            issuer_name="BuildFlow"
+        )
 
     def __str__(self):
         return self.email

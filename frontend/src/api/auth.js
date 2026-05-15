@@ -109,7 +109,7 @@ export const logout = async () => {
     localStorage.removeItem("company");
 
     // Always redirect back to the public (root) domain login page
-    window.location.href = "http://localhost:5173/login";
+    window.location.href = "http://localhost:5173/login?logout=true";
   }
 };
 
@@ -192,6 +192,34 @@ export const requestPasswordReset = async (email) => {
   const baseURL = getBackendUrl();
   const response = await axios.post(`${baseURL}/auth/password-reset/`, { email });
   return response.data;
+};
+
+/**
+ * Verify MFA Login
+ */
+export const verifyMFALogin = async ({ email, code }) => {
+  const baseURL = getBackendUrl();
+  const response = await axios.post(
+    `${baseURL}/auth/mfa/verify-login/`,
+    { email, code },
+    {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+
+  const access = response.data.tokens.access;
+  const user = response.data.data;
+
+  if (!user.role) {
+    user.role = user.subdomain === "admin" ? "SUPER_ADMIN" : "COMPANY_ADMIN";
+  }
+
+  localStorage.setItem("access", access);
+  localStorage.setItem("user", JSON.stringify(user));
+  localStorage.setItem("company", user.subdomain === "admin" ? "" : user.subdomain);
+
+  return { user, access, message: response.data.message };
 };
 
 /**

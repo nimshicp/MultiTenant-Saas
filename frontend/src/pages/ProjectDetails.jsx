@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
-import { deleteTask, updateTask } from "../api/projects";
+import { deleteTask, updateTask, updateProject } from "../api/projects";
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
@@ -10,6 +10,7 @@ const ProjectDetails = () => {
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   
@@ -40,6 +41,27 @@ const ProjectDetails = () => {
   useEffect(() => {
     fetchData();
   }, [projectId]);
+
+  const handleStatusChange = async (newStatus) => {
+    setUpdatingStatus(true);
+    try {
+      await updateProject(projectId, { status: newStatus });
+      fetchData();
+    } catch (err) {
+      alert("Failed to update project status.");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleTaskProgressUpdate = async (taskId, newProgress) => {
+    try {
+      await updateTask(taskId, { progress_percentage: newProgress });
+      fetchData();
+    } catch (err) {
+      alert("Failed to update task progress.");
+    }
+  };
 
   const handleOpenCreateModal = () => {
     setEditingTask(null);
@@ -76,7 +98,7 @@ const ProjectDetails = () => {
   };
 
   const handleDelete = async (taskId) => {
-    if (!window.confirm("Are you sure you want to permanently delete this task?")) return;
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
     try {
       await deleteTask(taskId);
       fetchData();
@@ -85,8 +107,17 @@ const ProjectDetails = () => {
     }
   };
 
-  if (loading) return <div className="p-20 text-center font-black text-slate-300 animate-pulse uppercase tracking-widest">Accessing Project Vault...</div>;
-  if (!project) return <div className="p-20 text-center text-red-500 font-bold">Project Not Found</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
+      <div className="text-[#FF6B2C] font-black tracking-[0.5em] animate-pulse uppercase">ACCESSING VAULT...</div>
+    </div>
+  );
+  
+  if (!project) return (
+    <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
+      <div className="text-red-500 font-black uppercase">Project Not Found</div>
+    </div>
+  );
 
   const isManagerOrAdmin = 
     user?.role === "ADMIN" || 
@@ -96,197 +127,218 @@ const ProjectDetails = () => {
     project.project_manager_detail?.email?.toLowerCase() === user?.user?.toLowerCase();
 
   return (
-    <div className="space-y-8 pb-20">
-      {/* Dynamic Header */}
-      <div className="rounded-[40px] bg-slate-900 p-10 text-white shadow-2xl relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <Link to="/company-dashboard/projects" className="text-[10px] font-black uppercase tracking-widest text-blue-400 hover:text-white transition mb-4 inline-block">← Back to Ecosystem</Link>
-            <h1 className="text-4xl font-black tracking-tighter italic leading-none">{project.name}</h1>
-            <p className="text-slate-400 mt-3 font-medium max-w-2xl text-sm">{project.description || "Project parameters synchronized and active."}</p>
+    <div className="min-h-screen bg-[#0A0A0F] text-white p-6 md:p-12 font-sans relative overflow-hidden">
+      {/* Background glow effects matching landing page */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[#FF6B2C]/5 rounded-full blur-[150px]"></div>
+        <div className="absolute bottom-[-15%] right-[-5%] w-[45%] h-[45%] bg-blue-500/5 rounded-full blur-[140px]"></div>
+        <div className="absolute top-[30%] right-[20%] w-80 h-80 bg-[#FF6B2C]/10 rounded-full blur-[100px]"></div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto space-y-10">
+        {/* --- HERO SECTION --- */}
+        <div className="relative rounded-[40px] bg-white/5 backdrop-blur-xl border border-white/10 p-10 md:p-14 overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="relative z-10 space-y-4">
+             <Link to="/company-dashboard/projects" className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6B2C] hover:text-white transition-colors">← Back to Ecosystem</Link>
+             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mt-2">{project.name}</h1>
+             <p className="text-gray-400 max-w-2xl font-medium leading-relaxed">{project.description || "Project parameters synchronized and active."}</p>
           </div>
           {isManagerOrAdmin && (
-            <button 
-              onClick={handleOpenCreateModal}
-              className="bg-blue-600 hover:bg-blue-700 px-10 py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-900/20 transition-all active:scale-95 text-xs"
-            >
+            <button onClick={handleOpenCreateModal} className="relative z-10 bg-gradient-to-r from-[#FF6B2C] to-[#FF8533] text-white px-8 py-4 rounded-2xl font-bold uppercase tracking-widest shadow-xl shadow-[#FF6B2C]/20 hover:shadow-[#FF6B2C]/40 transition-all active:scale-95 flex items-center gap-3 text-xs">
               + Initialize Task
             </button>
           )}
         </div>
-        <div className="absolute top-0 right-0 h-full w-1/2 bg-gradient-to-l from-blue-600/10 to-transparent blur-3xl"></div>
-      </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        {/* Project Intelligence Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100">
-            <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-6 border-b border-slate-50 pb-2">Core Intel</h3>
-            <div className="space-y-6">
-              <IntelItem label="Current Status" value={project.status_display} color="text-blue-600" />
-              <IntelItem label="Lead Manager" value={project.project_manager_detail?.full_name || "Unassigned"} />
-              <IntelItem label="Project Velocity" value={`${project.progress_percentage}%`} />
-              <IntelItem label="Tech Environment" value={project.tech_stack || "Standard"} />
-              <IntelItem label="Final Deadline" value={project.deadline || "TBD"} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Intelligence Sidebar */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-8 shadow-xl">
+               <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-6 border-b border-white/5 pb-4">Core Info</h3>
+               <div className="space-y-6">
+                 <div className="flex flex-col gap-2">
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Project Status</p>
+                   {isManagerOrAdmin ? (
+                     <select 
+                       disabled={updatingStatus}
+                       value={project.status}
+                       onChange={(e) => handleStatusChange(e.target.value)}
+                       className="bg-[#0A0A0F] border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-white focus:border-[#FF6B2C] outline-none cursor-pointer"
+                     >
+                       <option value="PLANNING">Planning</option>
+                       <option value="IN_PROGRESS">In Progress</option>
+                       <option value="ON_HOLD">On Hold</option>
+                       <option value="COMPLETED">Completed</option>
+                       <option value="CANCELLED">Cancelled</option>
+                     </select>
+                   ) : (
+                     <p className="text-sm font-bold text-blue-400 uppercase">{project.status_display}</p>
+                   )}
+                 </div>
+                 <IntelItem label="Lead Manager" value={project.project_manager_detail?.full_name || "Unassigned"} />
+                 <IntelItem label="Completion" value={`${project.progress_percentage}%`} />
+                 <IntelItem label="Tech Stack" value={project.tech_stack || "Standard"} />
+                 <IntelItem label="Deadline" value={project.deadline || "TBD"} />
+               </div>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-8 shadow-xl">
+               <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-6 border-b border-white/5 pb-4">Project Force</h3>
+               <div className="flex flex-wrap gap-2">
+                 {project.team_members_detail?.map(m => (
+                   <span key={m.id} className="bg-white/5 px-4 py-2 rounded-xl text-[10px] font-black text-gray-300 border border-white/5 uppercase tracking-widest">
+                     {m.full_name}
+                   </span>
+                 ))}
+               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100">
-            <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-6 border-b border-slate-50 pb-2">Project Force</h3>
-            <div className="flex flex-wrap gap-2">
-              {project.team_members_detail?.map(m => (
-                <div key={m.id} className="bg-slate-50 px-4 py-2 rounded-xl text-[10px] font-black text-slate-600 border border-slate-100 uppercase tracking-tight">
-                  {m.full_name}
-                </div>
-              ))}
+          {/* Task Control Center */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="flex items-center justify-between px-2">
+               <h2 className="text-2xl font-black tracking-tight">Task Matrix</h2>
+               <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 bg-white/5 px-4 py-1.5 rounded-full border border-white/10">Synchronized</span>
             </div>
-          </div>
-        </div>
 
-        {/* Task Control Center */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between px-2">
-            <h2 className="text-2xl font-black text-slate-800 tracking-tighter">Task Matrix</h2>
-            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">Syncing Live</span>
-          </div>
-
-          {tasks.length === 0 ? (
-            <div className="rounded-[32px] border-2 border-dashed border-slate-100 p-24 text-center text-slate-300 font-black uppercase tracking-widest">
-              No Active Operations
-            </div>
-          ) : (
-            <div className="grid gap-6">
-              {tasks.map(task => (
-                <div key={task.id} className="group bg-white rounded-[32px] p-8 border border-slate-50 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all duration-500">
-                  <div className="flex flex-col md:flex-row justify-between items-start gap-6">
-                    <div className="flex-1 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${getPriorityStyles(task.priority)}`}>{task.priority}</span>
-                          <h4 className="text-xl font-black text-slate-800 tracking-tight">{task.title}</h4>
+            {tasks.length === 0 ? (
+              <div className="rounded-[40px] border-2 border-dashed border-white/5 bg-white/5 p-24 text-center text-gray-600 font-black uppercase tracking-widest backdrop-blur-xl">No active operations found</div>
+            ) : (
+              <div className="space-y-6">
+                {tasks.map(task => (
+                  <div key={task.id} className="group bg-white/5 border border-white/10 rounded-[32px] p-8 backdrop-blur-xl shadow-xl transition-all duration-500 hover:border-[#FF6B2C]/30">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-8">
+                      <div className="flex-1 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${getPriorityStyles(task.priority)}`}>{task.priority}</span>
+                            <h4 className="text-xl font-black tracking-tight group-hover:text-[#FF6B2C] transition-colors">{task.title}</h4>
+                          </div>
+                          {isManagerOrAdmin && (
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                               <button onClick={() => handleOpenEditModal(task)} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-gray-500 hover:text-white transition-all">EDIT</button>
+                               <button onClick={() => handleDelete(task.id)} className="p-2.5 bg-white/5 hover:bg-red-500/20 rounded-xl text-gray-500 hover:text-red-500 transition-all">DEL</button>
+                            </div>
+                          )}
                         </div>
-                        {isManagerOrAdmin && (
-                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                            <button onClick={() => handleOpenEditModal(task)} className="p-2 bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-xl transition-all">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                            </button>
-                            <button onClick={() => handleDelete(task.id)} className="p-2 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-xl transition-all">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            </button>
+                        <p className="text-sm text-gray-400 font-medium leading-relaxed max-w-2xl">{task.description}</p>
+                        <div className="flex flex-wrap gap-4 pt-2">
+                           <MiniField label="Status" value={task.status_display} accent="text-blue-400" />
+                           <MiniField label="Assignee" value={task.assigned_to_detail?.full_name || "Unassigned"} />
+                           <MiniField label="Type" value={task.task_type_display} />
+                        </div>
+                        {task.notes && (
+                          <div className="bg-black/20 rounded-2xl p-5 border border-white/5 mt-4">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2 font-mono">Terminal Notes</p>
+                            <p className="text-xs font-medium text-gray-400 italic">"{task.notes}"</p>
                           </div>
                         )}
                       </div>
-                      
-                      <p className="text-sm text-slate-500 font-medium leading-relaxed">{task.description}</p>
-                      
-                      <div className="flex flex-wrap gap-4 pt-2">
-                        <MiniField label="Status" value={task.status_display} color="text-blue-600" />
-                        <MiniField label="Assignee" value={task.assigned_to_detail?.full_name || "Unassigned"} />
-                        <MiniField label="Type" value={task.task_type_display} />
-                      </div>
 
-                      {task.notes && (
-                        <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 mt-4">
-                          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Technical Summary</p>
-                          <p className="text-xs font-medium text-slate-600 italic">"{task.notes}"</p>
+                      <div className="w-full md:w-40 text-right">
+                        <div className="text-3xl font-bold tracking-tighter text-[#FF6B2C]">{task.progress_percentage}%</div>
+                        <div className="text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-1">Progress</div>
+                        
+                        {user?.role === "EMPLOYEE" && task.assigned_to_detail?.email?.toLowerCase() === user?.user?.toLowerCase() && (
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="100" 
+                            step="5"
+                            value={task.progress_percentage}
+                            onChange={(e) => handleTaskProgressUpdate(task.id, e.target.value)}
+                            className="w-full mt-4 h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-[#FF6B2C]"
+                          />
+                        )}
+                        
+                        <div className="mt-4 w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                          <div className="bg-gradient-to-r from-[#FF6B2C] to-[#FF8533] h-full transition-all duration-1000" style={{ width: `${task.progress_percentage}%` }}></div>
                         </div>
-                      )}
-                      
-                      {/* MICRO-TASK CHECKLIST REMOVED AS REQUESTED */}
-                    </div>
-
-                    <div className="w-full md:w-32 text-right">
-                      <div className="text-3xl font-black text-slate-900 tracking-tighter">{task.progress_percentage}%</div>
-                      <div className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Completion</div>
-                      <div className="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                        <div className="bg-blue-600 h-full transition-all duration-700" style={{ width: `${task.progress_percentage}%` }}></div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Task Modal (Create & Edit) */}
+      {/* Task Modal */}
       {isTaskModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-6 z-50">
-          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-xl p-10 animate-in zoom-in duration-300">
-            <h2 className="text-2xl font-black text-slate-900 tracking-tighter italic mb-8">
-              {editingTask ? "Modify Existing Operation" : "Initialize New Operation"}
-            </h2>
-            <form onSubmit={handleSubmitTask} className="space-y-5">
-              <Input label="Task Title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} required />
-              <div className="grid grid-cols-2 gap-5">
-                <SelectField label="Priority" value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value})}>
-                  <option value="LOW">Low</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HIGH">High</option>
-                  <option value="CRITICAL">Critical</option>
-                </SelectField>
-                <SelectField label="Type" value={taskForm.task_type} onChange={e => setTaskForm({...taskForm, task_type: e.target.value})}>
-                  <option value="FEATURE">Feature</option>
-                  <option value="BUG_FIX">Bug Fix</option>
-                  <option value="CODE_REVIEW">Code Review</option>
-                  <option value="TESTING">QA / Testing</option>
-                </SelectField>
-              </div>
-              <div className="grid grid-cols-2 gap-5">
-                <Input label="Due Date" type="date" value={taskForm.due_date} onChange={e => setTaskForm({...taskForm, due_date: e.target.value})} />
-                <SelectField label="Assign Personnel" value={taskForm.assigned_to} onChange={e => setTaskForm({...taskForm, assigned_to: e.target.value})} required>
+        <Modal title={editingTask ? "Sync Parameters" : "Initialize Task"} onClose={() => setIsTaskModalOpen(false)}>
+          <form onSubmit={handleSubmitTask} className="space-y-6 mt-8">
+            <Input label="Title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} required />
+            <div className="grid grid-cols-2 gap-5">
+               <SelectField label="Priority" value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value})}>
+                 <option value="LOW">Low</option>
+                 <option value="MEDIUM">Medium</option>
+                 <option value="HIGH">High</option>
+                 <option value="CRITICAL">Critical</option>
+               </SelectField>
+               <SelectField label="Type" value={taskForm.task_type} onChange={e => setTaskForm({...taskForm, task_type: e.target.value})}>
+                 <option value="FEATURE">Feature</option>
+                 <option value="BUG_FIX">Bug Fix</option>
+                 <option value="CODE_REVIEW">Code Review</option>
+                 <option value="TESTING">QA / Testing</option>
+               </SelectField>
+            </div>
+            <div className="grid grid-cols-2 gap-5">
+               <Input label="Due Date" type="date" value={taskForm.due_date} onChange={e => setTaskForm({...taskForm, due_date: e.target.value})} />
+               <SelectField label="Personnel" value={taskForm.assigned_to} onChange={e => setTaskForm({...taskForm, assigned_to: e.target.value})} required>
                   <option value="">Select Member</option>
-                  {project.team_members_detail?.map(m => (
-                    <option key={m.id} value={m.id}>{m.full_name}</option>
-                  ))}
-                </SelectField>
-              </div>
-              <textarea 
-                className="w-full h-24 rounded-2xl border border-slate-100 bg-slate-50 p-5 text-sm font-medium outline-none focus:bg-white focus:border-blue-400 transition-all"
-                placeholder="Technical specifications..."
-                value={taskForm.description}
-                onChange={e => setTaskForm({...taskForm, description: e.target.value})}
-              />
-              <div className="flex gap-4 mt-6">
-                <button type="button" onClick={() => setIsTaskModalOpen(false)} className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px]">Abort</button>
-                <button type="submit" className="flex-[2] bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all">
-                  {editingTask ? "Update Parameters" : "Initialize Task"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+                  {project.team_members_detail?.map(m => <option key={m.id} value={m.id}>{m.full_name}</option>)}
+               </SelectField>
+            </div>
+            <textarea className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-medium text-white focus:border-[#FF6B2C]/40 outline-none h-32 resize-none" placeholder="Technical specs..." value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} />
+            <button type="submit" className="w-full bg-[#FF6B2C] text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-[#FF8533] transition-all">
+              {editingTask ? "Apply Changes" : "Create Instance"}
+            </button>
+          </form>
+        </Modal>
       )}
     </div>
   );
 };
 
-const IntelItem = ({ label, value, color = "text-slate-800" }) => (
-  <div>
-    <p className="text-[9px] font-black uppercase tracking-widest text-slate-300 mb-1">{label}</p>
-    <p className={`text-sm font-black uppercase tracking-tight ${color}`}>{value || "UNSET"}</p>
+const Modal = ({ title, children, onClose }) => (
+  <div className="fixed inset-0 bg-[#0A0A0F]/90 backdrop-blur-xl flex items-center justify-center p-6 z-50">
+    <div className="bg-[#0A0A0F] border border-white/10 rounded-[40px] shadow-2xl w-full max-w-2xl p-10 md:p-14 relative overflow-hidden">
+      <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#FF6B2C]/5 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="flex justify-between items-center mb-4 relative z-10">
+        <h2 className="text-3xl font-black tracking-tighter italic">{title}</h2>
+        <button onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-full bg-white/5 text-gray-500 hover:text-white transition-all font-black">✕</button>
+      </div>
+      <div className="relative z-10">{children}</div>
+    </div>
   </div>
 );
 
-const MiniField = ({ label, value, color = "text-slate-700" }) => (
-  <div className="bg-slate-50 border border-slate-100 px-3 py-1 rounded-xl">
-    <span className="text-[8px] font-black uppercase tracking-widest text-slate-300 mr-2">{label}:</span>
-    <span className={`text-[9px] font-black uppercase tracking-tight ${color}`}>{value}</span>
+const IntelItem = ({ label, value, accent = "text-white" }) => (
+  <div>
+    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">{label}</p>
+    <p className={`text-sm font-black uppercase tracking-tight ${accent}`}>{value || "UNSET"}</p>
+  </div>
+);
+
+const MiniField = ({ label, value, accent = "text-gray-300" }) => (
+  <div className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-xl">
+    <span className="text-[9px] font-black uppercase tracking-widest text-gray-600 mr-2 font-mono">{label}:</span>
+    <span className={`text-[10px] font-black uppercase tracking-widest ${accent}`}>{value}</span>
   </div>
 );
 
 const Input = ({ label, ...props }) => (
-  <div className="space-y-1">
-    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{label}</label>
-    <input {...props} className="w-full rounded-xl border border-slate-100 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-800 focus:bg-white focus:border-blue-400 outline-none transition-all" />
+  <div className="space-y-2">
+    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{label}</label>
+    <input {...props} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-white focus:border-[#FF6B2C]/40 outline-none transition-all" />
   </div>
 );
 
 const SelectField = ({ label, children, ...props }) => (
-  <div className="space-y-1">
-    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{label}</label>
-    <select {...props} className="w-full rounded-xl border border-slate-100 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-800 focus:bg-white focus:border-blue-400 outline-none transition-all appearance-none">
+  <div className="space-y-2">
+    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{label}</label>
+    <select {...props} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-white focus:border-[#FF6B2C]/40 outline-none appearance-none cursor-pointer">
       {children}
     </select>
   </div>
@@ -294,10 +346,10 @@ const SelectField = ({ label, children, ...props }) => (
 
 const getPriorityStyles = (priority) => {
   switch (priority) {
-    case "CRITICAL": return "bg-red-500 text-white";
-    case "HIGH": return "bg-orange-500 text-white";
-    case "MEDIUM": return "bg-blue-600 text-white";
-    default: return "bg-slate-100 text-slate-500";
+    case "CRITICAL": return "bg-red-500 text-white shadow-lg shadow-red-500/20";
+    case "HIGH": return "bg-[#FF6B2C] text-white shadow-lg shadow-[#FF6B2C]/20";
+    case "MEDIUM": return "bg-blue-600 text-white shadow-lg shadow-blue-500/20";
+    default: return "bg-white/10 text-gray-400";
   }
 };
 

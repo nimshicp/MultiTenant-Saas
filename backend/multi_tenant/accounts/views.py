@@ -172,14 +172,14 @@ class VerifyMFALoginAPIView(APIView):
 
     def post(self, request):
         email = request.data.get("email")
-        code = request.data.get("code")
+        code = request.data.get("code", "").replace(" ", "")
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(email__iexact=email)
 
-            totp = pyotp.totp.TOTP(user.mfa_secret)
+            totp = pyotp.TOTP(user.mfa_secret)
 
-            if totp.verify(code):
+            if totp.verify(code, valid_window=2):
                 # Safely get role by switching to the correct tenant schema
                 user_role = "SUPERADMIN"
                 if hasattr(user, 'profile') and user.profile.tenant:

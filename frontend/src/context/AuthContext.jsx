@@ -3,6 +3,7 @@ import {
   login as loginUser,
   logout as logoutUser,
   restoreSession,
+  verifyMFALogin,
 } from "../api/auth";
 
 // Create Context
@@ -113,6 +114,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     login,
     logout,
+    verifyMFA: verifyMFALogin,
     setUser,
   };
 

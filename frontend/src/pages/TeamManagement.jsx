@@ -36,6 +36,21 @@ const TeamManagement = () => {
     fetchEmployees();
   }, []);
 
+  // Auto-dismiss alerts after 5 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(""), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(""), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
@@ -91,10 +106,9 @@ const TeamManagement = () => {
   };
 
   const handleDeleteEmployee = async (employeeId) => {
-    if (!window.confirm("Are you sure you want to permanently delete this employee? This action cannot be undone.")) {
+    if (!window.confirm("Are you sure you want to delete this employee?")) {
       return;
     }
-
     try {
       await api.delete(`/api/employee/manage/${employeeId}/`);
       setSuccess("Employee deleted successfully.");
@@ -114,174 +128,146 @@ const TeamManagement = () => {
   };
 
   return (
-    <div className="space-y-8 pb-20">
-      <div className="flex items-center justify-between bg-slate-900 p-10 rounded-[32px] shadow-2xl text-white">
-        <div>
-          <h1 className="text-3xl font-black tracking-tighter italic">Team Management</h1>
-          <p className="text-slate-400 mt-2 text-sm font-medium">Control workspace access, roles, and organizational structure.</p>
-        </div>
-        <button
-          onClick={() => { setIsInviteModalOpen(true); setFormData({ full_name: "", email: "", role: "EMPLOYEE", department: "", job_title: "" }); setSuccess(""); setError(""); }}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-900/20 transition-all active:scale-95 flex items-center gap-3"
-        >
-          <span className="text-xl">+</span> Invite Member
-        </button>
+    <div className="min-h-screen bg-[#0A0A0F] text-white p-6 md:p-12 font-sans relative overflow-hidden">
+      {/* Background glow effects matching landing page */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[#FF6B2C]/5 rounded-full blur-[150px]"></div>
+        <div className="absolute bottom-[-15%] right-[-5%] w-[45%] h-[45%] bg-blue-500/5 rounded-full blur-[140px]"></div>
+        <div className="absolute top-[30%] right-[20%] w-80 h-80 bg-[#FF6B2C]/10 rounded-full blur-[100px]"></div>
       </div>
 
-      <div className="bg-white rounded-[32px] shadow-xl shadow-slate-100 border border-slate-50 overflow-hidden">
-        <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-          <h2 className="text-xl font-black text-slate-800 tracking-tight">Active Roster</h2>
-          <span className="bg-white border border-slate-100 text-slate-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">{employees.length} Personnel</span>
-        </div>
-        
-        {fetching ? (
-          <div className="text-center py-24 text-slate-300 font-black uppercase tracking-widest animate-pulse">Scanning Bio-Metrics...</div>
-        ) : employees.length === 0 ? (
-          <div className="text-center py-24 text-slate-300 font-black uppercase tracking-widest">No Personnel Found</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50/50 text-slate-400 text-[10px] uppercase tracking-widest font-black">
-                <tr>
-                  <th className="py-5 px-8">Employee Identity</th>
-                  <th className="py-5 px-8">Assignment & Role</th>
-                  <th className="py-5 px-8">Status</th>
-                  <th className="py-5 px-8 text-right">Operations</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {employees.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-slate-50/50 transition-all duration-300 group">
-                    <td className="py-5 px-8">
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-slate-200">
-                          {emp.name?.slice(0, 2) || "U"}
-                        </div>
-                        <div>
-                          <div className="font-black text-slate-800 text-lg tracking-tight">{emp.name}</div>
-                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{emp.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-5 px-8">
-                      <div className="text-xs font-black text-blue-600 uppercase tracking-widest">{emp.role?.replace("_", " ")}</div>
-                      <div className="text-[10px] text-slate-400 uppercase font-black tracking-tighter mt-0.5">{emp.department || "Base Ops"} • {emp.job_title || "Personnel"}</div>
-                    </td>
-                    <td className="py-5 px-8">
-                      <div className="flex flex-col gap-1">
-                        {!emp.is_active ? (
-                          <span className="inline-block w-fit bg-red-50 text-red-600 px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-red-100">Deactivated</span>
-                        ) : emp.is_blocked ? (
-                          <span className="inline-block w-fit bg-orange-50 text-orange-600 px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-orange-100">Restricted</span>
-                        ) : (
-                          <span className="inline-block w-fit bg-emerald-50 text-emerald-600 px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-emerald-100">Authorized</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-5 px-8 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-90 group-hover:scale-100">
-                        <button 
-                          onClick={() => handleEditClick(emp)}
-                          className="p-3 bg-slate-50 hover:bg-blue-600 hover:text-white rounded-xl text-slate-400 transition-all shadow-sm"
-                          title="Modify Clearance"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button 
-                          onClick={() => toggleBlock(emp)}
-                          className={`p-3 rounded-xl transition-all shadow-sm ${emp.is_blocked ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white' : 'bg-slate-50 text-slate-400 hover:bg-orange-600 hover:text-white'}`}
-                          title={emp.is_blocked ? "Restore Access" : "Suspend Access"}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                          </svg>
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteEmployee(emp.employee_id)}
-                          className="p-3 bg-slate-50 hover:bg-red-600 hover:text-white rounded-xl text-slate-400 transition-all shadow-sm"
-                          title="Purge Personnel"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <div className="relative z-10 max-w-7xl mx-auto space-y-10">
+        {/* --- HERO SECTION --- */}
+        <div className="relative rounded-[40px] bg-white/5 backdrop-blur-xl border border-white/10 p-10 md:p-14 overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="relative z-10 space-y-4">
+            <span className="inline-flex items-center gap-2 text-[#FF6B2C] bg-[#FF6B2C]/10 text-[10px] font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full border border-[#FF6B2C]/20">
+              Team
+            </span>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter">
+              Team <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B2C] to-[#FF8533]">Management</span>
+            </h1>
+            <p className="text-gray-400 max-w-xl font-medium leading-relaxed">
+              Manage your team members, assigned roles, and access status.
+            </p>
           </div>
-        )}
+          <button
+            onClick={() => { setIsInviteModalOpen(true); setFormData({ full_name: "", email: "", role: "EMPLOYEE", department: "", job_title: "" }); setSuccess(""); setError(""); }}
+            className="relative z-10 bg-gradient-to-r from-[#FF6B2C] to-[#FF8533] text-white px-8 py-4 rounded-2xl font-bold uppercase tracking-widest shadow-xl shadow-[#FF6B2C]/20 hover:shadow-[#FF6B2C]/40 transition-all active:scale-95 flex items-center gap-3"
+          >
+            <span className="text-xl">+</span> Invite Member
+          </button>
+        </div>
+
+        {/* --- TEAM LIST PANEL --- */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[40px] shadow-2xl overflow-hidden">
+          <div className="p-8 border-b border-white/5 flex justify-between items-center">
+            <h2 className="text-2xl font-bold tracking-tight">Team List</h2>
+            <span className="bg-white/5 border border-white/10 text-gray-400 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest">{employees.length} Members</span>
+          </div>
+          
+          {fetching ? (
+            <div className="text-center py-24 text-[#FF6B2C] font-bold tracking-[0.3em] animate-pulse">LOADING MEMBERS...</div>
+          ) : employees.length === 0 ? (
+            <div className="text-center py-24 text-gray-600 font-bold tracking-widest">NO MEMBERS FOUND</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-white/5 text-gray-500 text-[10px] uppercase tracking-widest font-bold">
+                  <tr>
+                    <th className="py-6 px-10">Name</th>
+                    <th className="py-6 px-10">Role & Dept</th>
+                    <th className="py-6 px-10">Status</th>
+                    <th className="py-6 px-10 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {employees.map((emp) => (
+                    <tr key={emp.id} className="hover:bg-white/5 transition-all duration-300 group">
+                      <td className="py-6 px-10">
+                        <div className="flex items-center gap-5">
+                          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 border border-white/10 text-white flex items-center justify-center font-bold text-lg shadow-xl">
+                            {emp.name?.slice(0, 2) || "U"}
+                          </div>
+                          <div>
+                            <div className="font-bold text-white text-lg tracking-tight group-hover:text-[#FF6B2C] transition-colors">{emp.name}</div>
+                            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest font-mono">{emp.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-6 px-10">
+                        <div className="text-xs font-bold text-[#FF6B2C] uppercase tracking-widest">{emp.role?.replace("_", " ")}</div>
+                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-1">{emp.department || "General"} • {emp.job_title || "Team Member"}</div>
+                      </td>
+                      <td className="py-6 px-10">
+                        <StatusIndicator emp={emp} />
+                      </td>
+                      <td className="py-6 px-10 text-right">
+                        <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                          <button onClick={() => handleEditClick(emp)} className="p-3 bg-white/5 hover:bg-blue-600 hover:text-white rounded-xl text-gray-500 transition-all">EDIT</button>
+                          <button onClick={() => toggleBlock(emp)} className={`p-3 rounded-xl transition-all ${emp.is_blocked ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-600' : 'bg-white/5 text-gray-500 hover:bg-orange-600'}`}>{emp.is_blocked ? "UNLOCK" : "BLOCK"}</button>
+                          <button onClick={() => handleDeleteEmployee(emp.employee_id)} className="p-3 bg-white/5 hover:bg-red-600 text-gray-500 hover:text-white rounded-xl transition-all">DEL</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Invite Modal */}
+      {/* Modals with matching dark theme */}
       {isInviteModalOpen && (
-        <Modal title="Onboard Personnel" onClose={() => setIsInviteModalOpen(false)}>
-          <form onSubmit={handleInvite} className="space-y-5 mt-6">
-            {success && <div className="p-4 bg-emerald-50 text-emerald-600 text-xs font-black rounded-2xl border border-emerald-100 animate-in slide-in-from-top-2">Access Granted: Invitation Dispatched</div>}
-            {error && <div className="p-4 bg-red-50 text-red-600 text-xs font-black rounded-2xl border border-red-100 animate-in slide-in-from-top-2">{error}</div>}
-            
+        <Modal title="Invite Member" onClose={() => setIsInviteModalOpen(false)}>
+          <form onSubmit={handleInvite} className="space-y-6 mt-8">
+            {success && <div className="p-4 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold rounded-2xl border border-emerald-500/20">INVITATION SENT</div>}
+            {error && <div className="p-4 bg-red-500/10 text-red-400 text-[10px] font-bold rounded-2xl border border-red-500/20">{error}</div>}
             <div className="grid grid-cols-2 gap-5">
-              <Input label="Full Identity" name="full_name" value={formData.full_name} onChange={handleChange} required />
-              <Input label="Email Node" name="email" type="email" value={formData.email} onChange={handleChange} required />
+              <Input label="Full Name" name="full_name" value={formData.full_name} onChange={handleChange} required />
+              <Input label="Email" name="email" type="email" value={formData.email} onChange={handleChange} required />
             </div>
-            
             <div className="grid grid-cols-2 gap-5">
-              <SelectField label="Clearance Level" name="role" value={formData.role} onChange={handleChange}>
-                <option value="EMPLOYEE">Standard Employee</option>
-                <option value="PROJECT_MANAGER">Project Lead</option>
-                <option value="ADMIN">Company Admin</option>
+              <SelectField label="Role" name="role" value={formData.role} onChange={handleChange}>
+                <option value="EMPLOYEE">Employee</option>
+                <option value="PROJECT_MANAGER">Project Manager</option>
+                <option value="ADMIN">Admin</option>
               </SelectField>
-              <Input label="Sector/Dept" name="department" value={formData.department} onChange={handleChange} />
+              <Input label="Department" name="department" value={formData.department} onChange={handleChange} />
             </div>
-            <Input label="Designation" name="job_title" value={formData.job_title} onChange={handleChange} />
-            
-            <button disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-2xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95">
-              {loading ? "Transmitting..." : "Initialize Onboarding"}
+            <Input label="Job Title" name="job_title" value={formData.job_title} onChange={handleChange} />
+            <button disabled={loading} className="w-full bg-[#FF6B2C] text-white py-4 rounded-2xl font-bold uppercase tracking-widest mt-4 shadow-xl shadow-[#FF6B2C]/20 hover:bg-[#FF8533] transition-all">
+              {loading ? "SENDING..." : "Send Invitation"}
             </button>
           </form>
         </Modal>
       )}
 
-      {/* Edit Modal */}
       {isEditModalOpen && (
-        <Modal title={`Clearance Protocol: ${selectedEmployee?.name}`} onClose={() => setIsEditModalOpen(false)}>
-          <form onSubmit={handleUpdate} className="space-y-5 mt-6">
-            {success && <div className="p-4 bg-emerald-50 text-emerald-600 text-xs font-black rounded-2xl border border-emerald-100 animate-in slide-in-from-top-2">Profile Synchronized</div>}
-            
+        <Modal title={`Edit Member: ${selectedEmployee?.name}`} onClose={() => setIsEditModalOpen(false)}>
+          <form onSubmit={handleUpdate} className="space-y-6 mt-8">
+            {success && <div className="p-4 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold rounded-2xl border border-emerald-500/20">MEMBER UPDATED</div>}
             <div className="grid grid-cols-2 gap-5">
-              <Input label="Full Identity" name="full_name" value={formData.full_name} onChange={handleChange} required />
-              <SelectField label="Clearance Level" name="role" value={formData.role} onChange={handleChange}>
-                <option value="EMPLOYEE">Standard Employee</option>
-                <option value="PROJECT_MANAGER">Project Lead</option>
-                <option value="ADMIN">Company Admin</option>
+              <Input label="Full Name" name="full_name" value={formData.full_name} onChange={handleChange} required />
+              <SelectField label="Role" name="role" value={formData.role} onChange={handleChange}>
+                <option value="EMPLOYEE">Employee</option>
+                <option value="PROJECT_MANAGER">Project Manager</option>
+                <option value="ADMIN">Admin</option>
               </SelectField>
             </div>
-            
             <div className="grid grid-cols-2 gap-5">
-              <Input label="Sector/Dept" name="department" value={formData.department} onChange={handleChange} />
-              <Input label="Designation" name="job_title" value={formData.job_title} onChange={handleChange} />
+              <Input label="Department" name="department" value={formData.department} onChange={handleChange} />
+              <Input label="Job Title" name="job_title" value={formData.job_title} onChange={handleChange} />
             </div>
-
-            <div className="p-6 bg-slate-50 rounded-[24px] flex items-center justify-between mt-6 border border-slate-100">
+            <div className="p-6 bg-white/5 rounded-2xl flex items-center justify-between border border-white/5">
               <div>
-                <div className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Active Status</div>
-                <div className="text-[10px] text-slate-400 uppercase font-black tracking-tighter mt-1">Global account authorization</div>
+                <div className="text-[10px] font-bold text-white uppercase tracking-widest">Active Status</div>
+                <div className="text-[9px] text-gray-500 uppercase font-bold tracking-widest mt-1">Allow member to login</div>
               </div>
-              <input 
-                type="checkbox" 
-                name="is_active" 
-                checked={formData.is_active} 
-                onChange={handleChange}
-                className="h-6 w-6 rounded-lg border-slate-200 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer" 
-              />
+              <input type="checkbox" name="is_active" checked={formData.is_active} onChange={handleChange} className="h-6 w-6 rounded-lg bg-white/5 border-white/10 text-[#FF6B2C] focus:ring-[#FF6B2C] cursor-pointer" />
             </div>
-            
-            <button disabled={loading} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest mt-6 hover:bg-black transition-all shadow-2xl shadow-slate-100 active:scale-95">
-              {loading ? "Synchronizing..." : "Apply clearance"}
+            <button disabled={loading} className="w-full bg-[#FF6B2C] text-white py-4 rounded-2xl font-bold uppercase tracking-widest mt-6 hover:bg-[#FF8533] transition-all shadow-xl">
+              {loading ? "SYNCHRONIZING..." : "Update Member"}
             </button>
           </form>
         </Modal>
@@ -291,31 +277,38 @@ const TeamManagement = () => {
 };
 
 const Modal = ({ title, children, onClose }) => (
-  <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-6 z-50">
-    <div className="bg-white rounded-[40px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-xl p-10 animate-in fade-in zoom-in duration-300">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-black text-slate-900 tracking-tighter italic">{title}</h2>
-        <button onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all font-black">✕</button>
+  <div className="fixed inset-0 bg-[#0A0A0F]/90 backdrop-blur-xl flex items-center justify-center p-6 z-50">
+    <div className="bg-[#0A0A0F] border border-white/10 rounded-[40px] shadow-2xl w-full max-w-2xl p-10 md:p-14 relative overflow-hidden">
+      <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#FF6B2C]/5 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="flex justify-between items-center mb-4 relative z-10">
+        <h2 className="text-3xl font-bold tracking-tighter italic">{title}</h2>
+        <button onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-full bg-white/5 text-gray-500 hover:text-white transition-all font-bold">✕</button>
       </div>
-      {children}
+      <div className="relative z-10">{children}</div>
     </div>
   </div>
 );
 
 const Input = ({ label, ...props }) => (
   <div className="space-y-2">
-    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{label}</label>
-    <input {...props} className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 py-3.5 text-sm font-bold text-slate-800 focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50/50 transition-all outline-none" />
+    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{label}</label>
+    <input {...props} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-white focus:border-[#FF6B2C]/40 outline-none transition-all" />
   </div>
 );
 
 const SelectField = ({ label, children, ...props }) => (
   <div className="space-y-2">
-    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{label}</label>
-    <select {...props} className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-5 py-3.5 text-sm font-bold text-slate-800 focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50/50 transition-all outline-none appearance-none">
+    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">{label}</label>
+    <select {...props} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-white focus:border-[#FF6B2C]/40 outline-none appearance-none cursor-pointer">
       {children}
     </select>
   </div>
 );
+
+const StatusIndicator = ({ emp }) => {
+  if (!emp.is_active) return <span className="inline-block bg-red-500/10 text-red-500 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-red-500/20">Deactivated</span>;
+  if (emp.is_blocked) return <span className="inline-block bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-orange-500/20">Suspended</span>;
+  return <span className="inline-block bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">Authorized</span>;
+};
 
 export default TeamManagement;

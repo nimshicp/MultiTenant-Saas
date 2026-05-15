@@ -74,13 +74,17 @@ class ProjectDetailView(APIView):
 
     def patch(self, request, project_id):
         role = get_user_role(request.user)
-        if role not in ('ADMIN', 'SUPERADMIN'):
-            return Response({'detail': 'Only admins can update projects.'}, status=status.HTTP_403_FORBIDDEN)
-
         try:
             project = Project.objects.get(id=project_id)
         except Project.DoesNotExist:
             return Response({'detail': 'Project not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Allow Admins OR the assigned Project Manager to update
+        is_admin = role in ('ADMIN', 'SUPERADMIN')
+        is_assigned_pm = (role == 'PROJECT_MANAGER' and project.project_manager == request.user)
+
+        if not (is_admin or is_assigned_pm):
+            return Response({'detail': 'Permission denied. Only admins or the assigned project manager can update this project.'}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = ProjectSerializer(project, data=request.data, partial=True, context={'request': request})
         serializer.is_valid(raise_exception=True)
