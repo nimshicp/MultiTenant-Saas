@@ -56,6 +56,7 @@ SHARED_APPS = [
     'platform_admin',
     'accounts', 
     'billing',
+    'django_celery_beat',
     'django.contrib.admin',  
     'django.contrib.contenttypes',
     'django.contrib.auth',
@@ -188,26 +189,91 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.smtp.EmailBackend"
-)
+# EMAIL_BACKEND = os.getenv(
+#     "EMAIL_BACKEND",
+#     "django.core.mail.backends.smtp.EmailBackend"
+# )
 
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+# EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+# EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+# EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
 
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+# EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 
-DEFAULT_FROM_EMAIL = os.getenv(
-    "DEFAULT_FROM_EMAIL",
-    EMAIL_HOST_USER
-)
+# DEFAULT_FROM_EMAIL = os.getenv(
+#     "DEFAULT_FROM_EMAIL",
+#     EMAIL_HOST_USER
+# )
 
 
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_SECRET')
+
+CELERY_BROKER_URL = (
+    "amqp://guest:guest@localhost:5672//"
+)
+
+CELERY_ACCEPT_CONTENT = ["json"]
+
+CELERY_TASK_SERIALIZER = "json"
+
+CELERY_RESULT_SERIALIZER = "json"
+
+CELERY_TIMEZONE = "UTC"
+
+CELERY_RESULT_BACKEND = "rpc://"
+
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+
+    # Task reminders
+    "task-deadline-reminders": {
+        "task": "projects.tasks.send_task_deadline_reminders",
+        "schedule": crontab(hour=9, minute=0),
+    },
+
+    # Auto overdue task update
+    "update-overdue-tasks": {
+        "task": "projects.tasks.update_overdue_tasks",
+        "schedule": crontab(hour=0, minute=5),
+    },
+
+    # Project manager reminders
+    "project-deadline-reminders": {
+        "task": "projects.tasks.send_project_deadline_reminders",
+        "schedule": crontab(hour=9, minute=30),
+    },
+
+    # Auto overdue project update
+    "update-overdue-projects": {
+        "task": "projects.tasks.update_overdue_projects",
+        "schedule": crontab(hour=0, minute=10),
+    },
+
+    # Admin alerts
+    "admin-project-alerts": {
+        "task": "projects.tasks.send_admin_project_alerts",
+        "schedule": crontab(hour=10, minute=0),
+    },
+}
+
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = "sandbox.smtp.mailtrap.io"
+
+EMAIL_PORT = 2525
+
+EMAIL_HOST_USER = "c0c5647bc80f39"
+
+EMAIL_HOST_PASSWORD = "60f073c0a0fa87"
+
+EMAIL_USE_TLS = True
+
+DEFAULT_FROM_EMAIL = "noreply@binford.com"

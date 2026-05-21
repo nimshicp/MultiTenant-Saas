@@ -163,7 +163,7 @@ export const restoreSession = async () => {
     const company = localStorage.getItem("company") || null;
 
     const response = await axios.post(
-      `${getBackendUrl(company)}/api/auth/refresh/`,
+      `${getBackendUrl(company)}/api/auth/token/refresh/`,
       {},
       {
         withCredentials: true,

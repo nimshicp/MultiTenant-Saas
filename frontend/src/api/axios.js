@@ -103,7 +103,7 @@ api.interceptors.response.use(
       try {
         // Browser automatically sends refresh_token HttpOnly cookie
         const response = await axios.post(
-          `${getBaseURL()}/api/auth/refresh/`,
+          `${getBaseURL()}/api/auth/token/refresh/`,
           {},
           {
             withCredentials: true,

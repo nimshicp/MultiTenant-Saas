@@ -30,6 +30,7 @@ class ProjectStatus(models.TextChoices):
     ON_HOLD = 'ON_HOLD', 'On Hold'
     COMPLETED = 'COMPLETED', 'Completed'
     CANCELLED = 'CANCELLED', 'Cancelled'
+    OVERDUE = 'OVERDUE', 'Overdue'
 
 
 # ==========================================================
@@ -163,6 +164,7 @@ class TaskStatus(models.TextChoices):
     IN_PROGRESS = 'IN_PROGRESS', 'In Progress'
     IN_REVIEW = 'IN_REVIEW', 'In Review'
     DONE = 'DONE', 'Done'
+    OVERDUE = 'OVERDUE', 'Overdue'
 
 
 # ==========================================================
@@ -204,6 +206,11 @@ class Task(models.Model):
         default=TaskStatus.TODO
     )
 
+
+# Escalation tracking
+    is_escalated = models.BooleanField(
+        default=False
+    )
     # Progress & Effort
     progress_percentage = models.PositiveSmallIntegerField(
         default=0,
