@@ -1,6 +1,16 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
-import { fetchMyTasks, updateTask, addChecklistItem, updateChecklistItem, deleteChecklistItem } from "../api/projects";
+import api from "../api/axios";
+import {
+  fetchMyTasks,
+  updateTask,
+  addChecklistItem,
+  updateChecklistItem,
+  deleteChecklistItem,
+  getTaskEvidenceUploadUrl,
+  saveTaskEvidence,
+  fetchTaskEvidences,
+} from "../api/projects";
 
 const EmployeeDashboard = () => {
   const { user } = useAuth();
@@ -8,15 +18,34 @@ const EmployeeDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
+  const [taskEvidences, setTaskEvidences] = useState({});
 
   const loadTasks = async () => {
     try {
       const data = await fetchMyTasks();
-      setTasks(Array.isArray(data) ? data : []);
+      const nextTasks = Array.isArray(data) ? data : [];
+      setTasks(nextTasks);
+      setTaskEvidences({});
+      await Promise.all(nextTasks.map((task) => loadTaskEvidences(task.id)));
     } catch (err) {
       setError(err?.message || "Failed to load tasks.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTaskEvidences = async (taskId) => {
+    try {
+      const data = await fetchTaskEvidences(taskId);
+      setTaskEvidences((prev) => ({
+        ...prev,
+        [taskId]: Array.isArray(data) ? data : [],
+      }));
+    } catch {
+      setTaskEvidences((prev) => ({
+        ...prev,
+        [taskId]: [],
+      }));
     }
   };
 
@@ -83,6 +112,37 @@ const EmployeeDashboard = () => {
     }
   };
 
+  const handleEvidenceUpload = async (event, taskId) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const uploadData = await getTaskEvidenceUploadUrl(taskId, file.name, file.type || "application/octet-stream");
+
+      const uploadResponse = await fetch(uploadData.upload_url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type || "application/octet-stream",
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload evidence file.");
+      }
+
+      await saveTaskEvidence(taskId, {
+        file_key: uploadData.file_key,
+        file_name: file.name,
+      });
+
+      await loadTaskEvidences(taskId);
+      event.target.value = "";
+    } catch (err) {
+      alert(err?.message || "Failed to upload evidence.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
@@ -143,11 +203,13 @@ const EmployeeDashboard = () => {
                 <TaskCard 
                   key={task.id} 
                   task={task} 
+                  taskEvidence={taskEvidences[task.id] || []}
                   onStatusChange={handleStatusChange}
                   onProgressUpdate={handleProgressUpdate}
                   onAddCheckpoint={handleAddCheckpoint}
                   onToggleCheckpoint={handleToggleCheckpoint}
                   onDeleteCheckpoint={handleDeleteCheckpoint}
+                  onEvidenceUpload={handleEvidenceUpload}
                   isUpdating={updatingId === task.id}
                 />
               ))}
@@ -159,7 +221,7 @@ const EmployeeDashboard = () => {
   );
 };
 
-const TaskCard = ({ task, onStatusChange, onProgressUpdate, onAddCheckpoint, onToggleCheckpoint, onDeleteCheckpoint, isUpdating }) => {
+const TaskCard = ({ task, taskEvidence, onStatusChange, onProgressUpdate, onAddCheckpoint, onToggleCheckpoint, onDeleteCheckpoint, onEvidenceUpload, isUpdating }) => {
   const [localProgress, setLocalProgress] = useState(task.progress_percentage || 0);
   const [localNotes, setLocalNotes] = useState(task.notes || "");
   const [newCheckpoint, setNewCheckpoint] = useState("");
@@ -168,6 +230,22 @@ const TaskCard = ({ task, onStatusChange, onProgressUpdate, onAddCheckpoint, onT
     if (e.key === 'Enter' && newCheckpoint.trim()) {
       onAddCheckpoint(task.id, newCheckpoint.trim());
       setNewCheckpoint("");
+    }
+  };
+
+  const handleViewEvidence = async (evidenceId) => {
+    try {
+      const response = await api.get(
+        `/api/projects/tasks/evidence/${evidenceId}/view-url/`
+      );
+
+      if (response.data?.view_url) {
+        window.open(response.data.view_url, "_blank", "noopener,noreferrer");
+      } else {
+        throw new Error("No view URL returned.");
+      }
+    } catch (err) {
+      alert(err?.response?.data?.detail || err?.message || "Failed to open evidence.");
     }
   };
 
@@ -283,6 +361,40 @@ const TaskCard = ({ task, onStatusChange, onProgressUpdate, onAddCheckpoint, onT
                 placeholder="Add notes about your progress..."
                 className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-5 text-sm font-medium text-gray-300 focus:border-[#FF6B2C]/40 transition-all outline-none resize-none"
               />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4 ml-1">Task Evidence</label>
+              <label className="flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/5 px-5 py-6 text-center transition-all hover:border-[#FF6B2C]/40 hover:bg-white/10">
+                <span className="text-sm font-bold text-white">Upload Evidence</span>
+                <span className="mt-1 text-[10px] uppercase tracking-[0.2em] text-gray-500">
+                  Image, PDF, or document
+                </span>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+                  className="hidden"
+                  onChange={(e) => onEvidenceUpload(e, task.id)}
+                />
+              </label>
+
+              {taskEvidence.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {taskEvidence.map((evidence, index) => (
+                    <button
+                      key={evidence.id || `${task.id}-evidence-${index}`}
+                      type="button"
+                      onClick={() => handleViewEvidence(evidence.id)}
+                      className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs font-bold text-gray-300 transition-all hover:border-[#FF6B2C]/30 hover:text-white"
+                    >
+                      <span className="truncate pr-3">
+                        {evidence.file_name || evidence.name || "Evidence file"}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-[#FF6B2C]">View</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <button 

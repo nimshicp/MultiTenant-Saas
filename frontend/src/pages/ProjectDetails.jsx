@@ -2,13 +2,19 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
-import { deleteTask, updateTask, updateProject } from "../api/projects";
+import {
+  deleteTask,
+  updateTask,
+  updateProject,
+  fetchTaskEvidences,
+} from "../api/projects";
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
   const { user } = useAuth();
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [taskEvidences, setTaskEvidences] = useState({});
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -30,11 +36,29 @@ const ProjectDetails = () => {
         api.get(`/api/projects/${projectId}/tasks/`)
       ]);
       setProject(projRes.data);
-      setTasks(taskRes.data);
+      const nextTasks = Array.isArray(taskRes.data) ? taskRes.data : [];
+      setTasks(nextTasks);
+      setTaskEvidences({});
+      await Promise.all(nextTasks.map((task) => loadTaskEvidences(task.id)));
     } catch (err) {
       console.error("Failed to fetch project details", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTaskEvidences = async (taskId) => {
+    try {
+      const data = await fetchTaskEvidences(taskId);
+      setTaskEvidences((prev) => ({
+        ...prev,
+        [taskId]: Array.isArray(data) ? data : [],
+      }));
+    } catch (err) {
+      setTaskEvidences((prev) => ({
+        ...prev,
+        [taskId]: [],
+      }));
     }
   };
 
@@ -60,6 +84,22 @@ const ProjectDetails = () => {
       fetchData();
     } catch (err) {
       alert("Failed to update task progress.");
+    }
+  };
+
+  const handleViewEvidence = async (evidenceId) => {
+    try {
+      const response = await api.get(
+        `/api/projects/tasks/evidence/${evidenceId}/view-url/`
+      );
+
+      if (response.data?.view_url) {
+        window.open(response.data.view_url, "_blank", "noopener,noreferrer");
+      } else {
+        throw new Error("No view URL returned.");
+      }
+    } catch (err) {
+      alert(err?.response?.data?.detail || err?.message || "Failed to open evidence.");
     }
   };
 
@@ -231,6 +271,27 @@ const ProjectDetails = () => {
                           <div className="bg-black/20 rounded-2xl p-5 border border-white/5 mt-4">
                             <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2 font-mono">Terminal Notes</p>
                             <p className="text-xs font-medium text-gray-400 italic">"{task.notes}"</p>
+                          </div>
+                        )}
+
+                        {taskEvidences[task.id]?.length > 0 && (
+                          <div className="bg-black/20 rounded-2xl p-5 border border-white/5 mt-4">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-3 font-mono">Task Evidence</p>
+                            <div className="space-y-2">
+                              {taskEvidences[task.id].map((evidence, index) => (
+                                <button
+                                  key={evidence.id || `${task.id}-evidence-${index}`}
+                                  type="button"
+                                  onClick={() => handleViewEvidence(evidence.id)}
+                                  className="flex w-full items-center justify-between rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-left text-xs font-bold text-gray-300 transition-all hover:border-[#FF6B2C]/30 hover:text-white"
+                                >
+                                  <span className="truncate pr-3">
+                                    {evidence.file_name || evidence.name || "Evidence file"}
+                                  </span>
+                                  <span className="text-[10px] uppercase tracking-[0.2em] text-[#FF6B2C]">View</span>
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>

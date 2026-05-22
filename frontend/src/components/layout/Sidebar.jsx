@@ -16,17 +16,20 @@ const Sidebar = () => {
       links.push(
         { name: "Dashboard", path: "/company-dashboard" },
         { name: "Projects", path: "/company-dashboard/projects" },
-        { name: "Invite Team", path: "/company-dashboard/team" }
+        { name: "Invite Team", path: "/company-dashboard/team" },
+        { name: "Chat", path: "/chat" }
       );
     } else if (role === "PROJECT_MANAGER") {
       links.push(
         { name: "Dashboard", path: "/project-manager-dashboard" },
-        { name: "Projects", path: "/company-dashboard/projects" }
+        { name: "Projects", path: "/company-dashboard/projects" },
+        { name: "Chat", path: "/chat" }
       );
     } else if (role === "EMPLOYEE" || role === "VIEWER") {
       links.push(
         { name: "My Dashboard", path: "/employee-dashboard" },
-        { name: "Projects", path: "/company-dashboard/projects" }
+        { name: "Projects", path: "/company-dashboard/projects" },
+        { name: "Chat", path: "/chat" }
       );
     }
 

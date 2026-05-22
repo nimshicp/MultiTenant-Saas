@@ -1,11 +1,16 @@
-# from django.contrib import admin
+from django.contrib import admin
 
-# from .models import Project
+from .models import (
+    Project,
+    Task,
+    TaskChecklistItem,
+    TaskEvidence
+)
 
+admin.site.register(Project)
 
-# @admin.register(Project)
-# class ProjectAdmin(admin.ModelAdmin):
-#     list_display = ("name", "status", "location", "project_manager", "created_at")
-#     list_filter = ("status", "created_at")
-#     search_fields = ("name", "location", "description")
+admin.site.register(Task)
 
+admin.site.register(TaskChecklistItem)
+
+admin.site.register(TaskEvidence)

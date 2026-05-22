@@ -3,7 +3,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Project, Task, TaskComment,TaskChecklistItem
+from .models import Project, Task, TaskComment,TaskChecklistItem,TaskEvidence
 
 User = get_user_model()
 
@@ -142,3 +142,39 @@ class TaskSerializer(serializers.ModelSerializer):
         request = self.context['request']
         task = Task.objects.create(created_by=request.user, **validated_data)
         return task
+
+class TaskEvidenceSerializer(serializers.ModelSerializer):
+
+        uploaded_by_name =serializers.SerializerMethodField()
+
+        class Meta:
+
+            model = TaskEvidence
+
+            fields = [
+
+            "id",
+
+            "file_key",
+
+            "file_name",
+
+            "uploaded_at",
+
+            "uploaded_by_name"
+        ]
+
+        def get_uploaded_by_name(self,obj):
+
+            try:
+
+                return (
+                obj.uploaded_by
+                .profile
+                .full_name
+                or obj.uploaded_by.email
+            )
+
+            except Exception:
+
+                return obj.uploaded_by.email

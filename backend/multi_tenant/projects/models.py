@@ -291,3 +291,26 @@ class TaskChecklistItem(models.Model):
 
     def __str__(self):
         return f"{self.content} ({'Done' if self.is_completed else 'Pending'})"
+
+class TaskEvidence(models.Model):
+
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name="evidences"
+    )
+
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+
+    file_key = models.TextField()
+
+    file_name = models.CharField(
+        max_length=255
+    )
+
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True
+    )

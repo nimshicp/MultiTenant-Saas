@@ -67,6 +67,7 @@ SHARED_APPS = [
     'rest_framework',
 
     'corsheaders',
+    'channels',
 ]
 
 TENANT_APPS = [
@@ -74,6 +75,7 @@ TENANT_APPS = [
     'django.contrib.auth',
     'employee', 
     'projects',
+    'chat',
     
 ]
 
@@ -108,6 +110,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
 }
+
+ASGI_APPLICATION = "multi_tenant.asgi.application"
 
 
 SIMPLE_JWT = {
@@ -189,25 +193,25 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
-# EMAIL_BACKEND = os.getenv(
-#     "EMAIL_BACKEND",
-#     "django.core.mail.backends.smtp.EmailBackend"
-# )
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend"
+)
 
-# EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 
-# EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 
-# EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
 
-# EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 
-# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 
-# DEFAULT_FROM_EMAIL = os.getenv(
-#     "DEFAULT_FROM_EMAIL",
-#     EMAIL_HOST_USER
-# )
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    EMAIL_HOST_USER
+)
 
 
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
@@ -264,16 +268,37 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-EMAIL_HOST = "sandbox.smtp.mailtrap.io"
 
-EMAIL_PORT = 2525
 
-EMAIL_HOST_USER = "c0c5647bc80f39"
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
 
-EMAIL_HOST_PASSWORD = "60f073c0a0fa87"
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 
-EMAIL_USE_TLS = True
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "")
 
-DEFAULT_FROM_EMAIL = "noreply@binford.com"
+# Keep the existing runtime name used by the upload code, but allow either env key.
+AWS_REGION_NAME = os.getenv(
+    "AWS_REGION_NAME",
+    os.getenv("AWS_S3_REGION_NAME", "ap-south-2")
+)
+
+AWS_S3_CUSTOM_DOMAIN = os.getenv(
+    "AWS_S3_CUSTOM_DOMAIN",
+    f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_REGION_NAME}.amazonaws.com"
+)
+
+
+CHANNEL_LAYERS = {
+
+    "default": {
+
+        "BACKEND":
+            "channels_redis.core.RedisChannelLayer",
+
+        "CONFIG": {
+
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}

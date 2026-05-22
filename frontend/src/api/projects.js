@@ -139,3 +139,88 @@ export const fetchEmployees = async () => {
     throw new Error(extractErrorMessage(error, "Failed to fetch employees."));
   }
 };
+
+// ===============================
+// TASK EVIDENCE APIs
+// ===============================
+
+export const getTaskEvidenceUploadUrl = async (
+  taskId,
+  fileName,
+  contentType
+) => {
+  try {
+
+    const response = await api.post(
+
+      `/api/projects/tasks/${taskId}/upload-url/`,
+
+      {
+        file_name: fileName,
+        content_type: contentType,
+      }
+    );
+
+    return response.data;
+
+  } catch (error) {
+
+    throw new Error(
+      extractErrorMessage(
+        error,
+        "Failed to generate upload URL."
+      )
+    );
+  }
+};
+
+
+export const saveTaskEvidence = async (
+  taskId,
+  payload
+) => {
+  try {
+
+    const response = await api.post(
+
+      `/api/projects/tasks/${taskId}/evidence/`,
+
+      payload
+    );
+
+    return response.data;
+
+  } catch (error) {
+
+    throw new Error(
+      extractErrorMessage(
+        error,
+        "Failed to save task evidence."
+      )
+    );
+  }
+};
+
+
+export const fetchTaskEvidences = async (
+  taskId
+) => {
+  try {
+
+    const response = await api.get(
+
+      `/api/projects/tasks/${taskId}/evidence/list/`
+    );
+
+    return response.data;
+
+  } catch (error) {
+
+    throw new Error(
+      extractErrorMessage(
+        error,
+        "Failed to fetch task evidences."
+      )
+    );
+  }
+};
