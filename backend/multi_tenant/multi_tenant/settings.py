@@ -68,6 +68,7 @@ SHARED_APPS = [
 
     'corsheaders',
     'channels',
+    'meeting'
 ]
 
 TENANT_APPS = [

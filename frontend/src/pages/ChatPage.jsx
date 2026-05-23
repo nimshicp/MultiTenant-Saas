@@ -29,19 +29,27 @@ const ChatPage = () => {
   const socketRef = useRef(null);
   const endRef = useRef(null);
 
-  const canChat = useMemo(() => Boolean(user?.id), [user]);
+  // Safely extract identity labels from global Auth context
   const currentUserLabel = useMemo(() => {
     if (typeof user === "string") return user;
     return user?.name || user?.full_name || user?.user || user?.email || "";
   }, [user]);
+
   const currentUserEmail = useMemo(() => {
     if (typeof user === "string") return "";
     return user?.email || "";
   }, [user]);
+
   const currentUserId = useMemo(() => {
     if (typeof user === "string") return "";
     return user?.id ? String(user.id) : "";
   }, [user]);
+
+  // Keep a mutable ref of activeUser so WebSocket listeners always read the fresh state values
+  const activeUserRef = useRef(activeUser);
+  useEffect(() => {
+    activeUserRef.current = activeUser;
+  }, [activeUser]);
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -131,9 +139,7 @@ const ChatPage = () => {
     const backendBaseURL = getChatBackendBaseURL();
     const backendHost = new URL(backendBaseURL).host;
     const protocol = backendBaseURL.startsWith("https://") ? "wss" : "ws";
-
     const token = localStorage.getItem("access");
-
     const socketUrl = `${protocol}://${backendHost}/ws/chat/${roomId}/?token=${token}`;
 
     const socket = new WebSocket(socketUrl);
@@ -150,12 +156,21 @@ const ChatPage = () => {
       try {
         const data = JSON.parse(event.data);
         const senderId = String(data.sender_id || "");
+        const incomingSenderName = String(data.sender_name || "").trim().toLowerCase();
+        
+        const localLabel = String(currentUserLabel || "").trim().toLowerCase();
+        const localEmail = String(currentUserEmail || "").trim().toLowerCase();
 
-        if (
-          senderId &&
-          senderId !== currentUserId &&
-          activeUser?.id !== senderId
-        ) {
+        // Comprehensive match logic (Checks ID, Name, Emails, and substrings like username matching email)
+        const isFromMe = 
+          (currentUserId && senderId === currentUserId) || 
+          (localLabel && incomingSenderName === localLabel) || 
+          (localEmail && incomingSenderName === localEmail) ||
+          (localLabel && incomingSenderName.includes(localLabel)) ||
+          (localEmail && incomingSenderName.includes(localEmail));
+
+        // Background handler for unread badges from other channels
+        if (!isFromMe && activeUserRef.current?.id !== senderId) {
           setChatUsers((prev) =>
             prev.map((item) => {
               if (String(item.id) === senderId) {
@@ -164,56 +179,66 @@ const ChatPage = () => {
                   unread_count: Number(item.unread_count || 0) + 1,
                 };
               }
-
               return item;
             }),
           );
         }
+
         setMessages((prev) => {
-          const incomingMessage = {
-            id: `${Date.now()}-${Math.random()}`,
-            content: data.message,
-            sender: data.sender_id,
-            sender_name: data.sender_name || "User",
-            created_at: data.created_at,
-            pending: false,
-          };
+          // ===================================
+          // THE BROADCAST CAME FROM YOU
+          // ===================================
+          if (isFromMe) {
+            const updated = [...prev];
+            // Locate local preview wrapper by text contents matching the WebSocket broadcast string
+            const pendingIndex = updated.findIndex(
+              (msg) => msg.pending === true && msg.content === data.message
+            );
 
-          const lastMessage = prev[prev.length - 1];
-          const isSelfMessage =
-            String(data.sender_id) === currentUserId ||
-            String(data.sender_name || "")
-              .trim()
-              .toLowerCase() ===
-              String(currentUserLabel || "")
-                .trim()
-                .toLowerCase() ||
-            String(data.sender_name || "")
-              .trim()
-              .toLowerCase() ===
-              String(currentUserEmail || "")
-                .trim()
-                .toLowerCase();
-
-          if (
-            isSelfMessage &&
-            lastMessage?.pending &&
-            lastMessage.content === data.message
-          ) {
-            const next = [...prev];
-            next[next.length - 1] = {
-              ...lastMessage,
-              pending: false,
-              sender_name: data.sender_name || lastMessage.sender_name,
-              created_at: data.created_at || lastMessage.created_at,
-            };
-            return next;
+            // Successfully switch out the optimistic preview with official values
+            if (pendingIndex !== -1) {
+              updated[pendingIndex] = {
+                ...updated[pendingIndex],
+                id: data.message_id || updated[pendingIndex].id,
+                sender_name: data.sender_name || updated[pendingIndex].sender_name,
+                pending: false,
+                created_at: data.created_at,
+              };
+              return updated;
+            }
+            
+            // Safety filter bypass guard: avoid inserting duplicates if processing delays happen
+            const alreadyAdded = updated.some(msg => msg.id === data.message_id);
+            if (alreadyAdded) return prev;
           }
 
-          return [...prev, incomingMessage];
+          // ===================================
+          // THE BROADCAST CAME FROM A TEAMMATE
+          // ===================================
+          const alreadyExists = prev.some(
+            (msg) =>
+              msg.content === data.message &&
+              msg.created_at === data.created_at
+          );
+
+          if (alreadyExists) {
+            return prev;
+          }
+
+          return [
+            ...prev,
+            {
+              id: data.message_id || `${Date.now()}-${Math.random()}`,
+              content: data.message,
+              sender: Number(senderId) || senderId,
+              sender_name: data.sender_name || "User",
+              created_at: data.created_at,
+              pending: false,
+            },
+          ];
         });
-      } catch {
-        // Ignore malformed payloads.
+      } catch (err) {
+        console.error("Socket incoming stream processing failure:", err);
       }
     };
 
@@ -229,7 +254,7 @@ const ChatPage = () => {
     return () => {
       socket.close();
     };
-  }, [roomId]);
+  }, [roomId, currentUserId, currentUserLabel, currentUserEmail]);
 
   const openChatWithUser = async (targetUser) => {
     if (!targetUser?.id) return;
@@ -248,8 +273,8 @@ const ChatPage = () => {
                 ...item,
                 unread_count: 0,
               }
-            : item,
-        ),
+            : item
+        )
       );
     } catch (err) {
       setError(err?.message || "Failed to open chat.");
@@ -274,15 +299,16 @@ const ChatPage = () => {
       JSON.stringify({
         message: trimmed,
         sender_id: user?.id,
-      }),
+      })
     );
 
+    // Push local state placeholder to provide instantaneous right-hand side text bubble feedback
     setMessages((prev) => [
       ...prev,
       {
         id: `local-${Date.now()}-${Math.random()}`,
         content: trimmed,
-        sender: user?.id,
+        sender: Number(user?.id) || user?.id,
         sender_name: currentUserLabel || currentUserEmail || "You",
         created_at: new Date().toISOString(),
         pending: true,
@@ -297,22 +323,43 @@ const ChatPage = () => {
     : "No room selected";
 
   const isMyMessage = (message) => {
-    const senderId = String(message?.sender || "");
-    const senderName = String(message?.sender_name || "")
-      .trim()
-      .toLowerCase();
-    const label = String(currentUserLabel || "")
-      .trim()
-      .toLowerCase();
-    const email = String(currentUserEmail || "")
-      .trim()
-      .toLowerCase();
+    // Check ID match
+    const senderId = String(message?.sender || message?.sender_id || "");
+    if (currentUserId && senderId === currentUserId) return true;
+
+    // Check case-insensitive label matching
+    const incomingSenderName = String(message?.sender_name || "").trim().toLowerCase();
+    const localLabel = String(currentUserLabel || "").trim().toLowerCase();
+    const localEmail = String(currentUserEmail || "").trim().toLowerCase();
 
     return (
-      (currentUserId && senderId === currentUserId) ||
-      (label && senderName === label) ||
-      (email && senderName === email)
+      (localLabel && incomingSenderName === localLabel) ||
+      (localEmail && incomingSenderName === localEmail) ||
+      (localLabel && incomingSenderName.includes(localLabel)) ||
+      (localEmail && incomingSenderName.includes(localEmail))
     );
+  };
+
+  // WhatsApp-style human-readable group date formatting engine
+  const formatMessageGroupDate = (dateString) => {
+    if (!dateString) return "";
+    const messageDate = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    today.setHours(0, 0, 0, 0);
+    yesterday.setHours(0, 0, 0, 0);
+    const compareDate = new Date(messageDate);
+    compareDate.setHours(0, 0, 0, 0);
+
+    if (compareDate.getTime() === today.getTime()) {
+      return "Today";
+    } else if (compareDate.getTime() === yesterday.getTime()) {
+      return "Yesterday";
+    } else {
+      return messageDate.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" });
+    }
   };
 
   return (
@@ -477,50 +524,72 @@ const ChatPage = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {messages.map((message, index) => {
-                  const isMine = isMyMessage(message);
-                  return (
-                    <div
-                      key={message.id || index}
-                      className={`flex ${isMine ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[85%] md:max-w-[70%] rounded-[28px] px-5 py-4 border ${
-                          isMine
-                            ? "bg-gradient-to-r from-[#FF6B2C] to-[#FF8533] border-[#FF6B2C]/30 text-white"
-                            : "bg-white/5 border-white/10 text-gray-200"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-4 mb-2">
-                          <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">
-                            {message.sender_name || (isMine ? "You" : "Member")}
-                          </span>
-                          <span className="text-[10px] uppercase tracking-widest opacity-60">
-                            {message.created_at
-                              ? new Date(message.created_at).toLocaleTimeString(
-                                  [],
-                                  { hour: "2-digit", minute: "2-digit" },
-                                )
-                              : ""}
-                          </span>
+                {(() => {
+                  let lastDateHeader = "";
+
+                  return messages.map((message, index) => {
+                    const isMine = isMyMessage(message);
+                    
+                    // Evaluate group divider criteria
+                    const currentGroupDate = formatMessageGroupDate(message.created_at);
+                    let showDateHeader = false;
+
+                    if (currentGroupDate && currentGroupDate !== lastDateHeader) {
+                      showDateHeader = true;
+                      lastDateHeader = currentGroupDate;
+                    }
+
+                    return (
+                      <div key={message.id || index} className="space-y-4">
+                        {/* WhatsApp-style Sticky Center Separator */}
+                        {showDateHeader && (
+                          <div className="flex justify-center my-6">
+                            <span className="bg-white/5 border border-white/10 text-gray-400 text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full backdrop-blur-md shadow-lg">
+                              {currentGroupDate}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                          <div
+                            className={`max-w-[85%] md:max-w-[70%] rounded-[28px] px-5 py-4 border ${
+                              isMine
+                                ? "bg-gradient-to-r from-[#FF6B2C] to-[#FF8533] border-[#FF6B2C]/30 text-white"
+                                : "bg-white/5 border-white/10 text-gray-200"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-4 mb-2">
+                              <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">
+                                {message.sender_name || (isMine ? "You" : "Member")}
+                              </span>
+                              <span className="text-[10px] uppercase tracking-widest opacity-60">
+                                {message.created_at
+                                  ? new Date(message.created_at).toLocaleTimeString(
+                                      [],
+                                      { hour: "2-digit", minute: "2-digit" }
+                                    )
+                                  : ""}
+                              </span>
+                            </div>
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                              {message.content || message.message}
+                            </p>
+                            {message.pending && isMine && (
+                              <div className="mt-2 text-right text-[9px] font-bold uppercase tracking-[0.25em] opacity-70">
+                                sending...
+                              </div>
+                            )}
+                            {isMine && !message.pending && (
+                              <div className="mt-2 text-right text-[9px] font-bold uppercase tracking-[0.25em] opacity-70">
+                                ✓✓
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                          {message.content}
-                        </p>
-                        {message.pending && isMine && (
-                          <div className="mt-2 text-right text-[9px] font-bold uppercase tracking-[0.25em] opacity-70">
-                            sending...
-                          </div>
-                        )}
-                        {isMine && (
-                          <div className="mt-2 text-right text-[9px] font-bold uppercase tracking-[0.25em] opacity-70">
-                            ✓✓
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
                 <div ref={endRef} />
               </div>
             )}
