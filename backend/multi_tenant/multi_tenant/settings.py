@@ -246,25 +246,25 @@ CELERY_BEAT_SCHEDULE = {
     # Auto overdue task update
     "update-overdue-tasks": {
         "task": "projects.tasks.update_overdue_tasks",
-        "schedule": crontab(hour=0, minute=5),
+        "schedule": crontab(hour=9, minute=0),
     },
 
     # Project manager reminders
     "project-deadline-reminders": {
         "task": "projects.tasks.send_project_deadline_reminders",
-        "schedule": crontab(hour=9, minute=30),
+        "schedule": crontab(hour=9, minute=0),
     },
 
     # Auto overdue project update
     "update-overdue-projects": {
         "task": "projects.tasks.update_overdue_projects",
-        "schedule": crontab(hour=0, minute=10),
+        "schedule": crontab(hour=9, minute=0),
     },
 
     # Admin alerts
     "admin-project-alerts": {
         "task": "projects.tasks.send_admin_project_alerts",
-        "schedule": crontab(hour=10, minute=0),
+        "schedule": crontab(hour=9, minute=0),
     },
 }
 
