@@ -23,6 +23,7 @@ import ChatPage from "./pages/ChatPage";
 import MainLayout from "./components/layout/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
+import MeetingsPage from "./pages/Meeting";
 
 // Auto-redirector for the root path
 const RootRedirect = () => {
@@ -31,10 +32,14 @@ const RootRedirect = () => {
   if (loading) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  if (user?.role === "SUPERADMIN") return <Navigate to="/platform-admin" replace />;
-  if (user?.role === "ADMIN") return <Navigate to="/company-dashboard" replace />;
-  if (user?.role === "PROJECT_MANAGER") return <Navigate to="/project-manager-dashboard" replace />;
-  if (user?.role === "EMPLOYEE") return <Navigate to="/employee-dashboard" replace />;
+  if (user?.role === "SUPERADMIN")
+    return <Navigate to="/platform-admin" replace />;
+  if (user?.role === "ADMIN")
+    return <Navigate to="/company-dashboard" replace />;
+  if (user?.role === "PROJECT_MANAGER")
+    return <Navigate to="/project-manager-dashboard" replace />;
+  if (user?.role === "EMPLOYEE")
+    return <Navigate to="/employee-dashboard" replace />;
 
   return <Navigate to="/login" replace />;
 };
@@ -49,68 +54,106 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/accept-invitation/:token" element={<AcceptInvitation />} />
+          <Route
+            path="/accept-invitation/:token"
+            element={<AcceptInvitation />}
+          />
 
           {/* Protected Routes inside the Main Layout */}
-          <Route element={
-            <ProtectedRoute>
-              <MainLayout />
-            </ProtectedRoute>
-          }>
-
+          <Route
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
             {/* SUPER ADMIN Routes */}
-            <Route path="/platform-admin" element={
-              <RoleRoute allowedRoles={["SUPERADMIN"]}>
-                <PlatformDashboard />
-              </RoleRoute>
-            } />
+            <Route
+              path="/platform-admin"
+              element={
+                <RoleRoute allowedRoles={["SUPERADMIN"]}>
+                  <PlatformDashboard />
+                </RoleRoute>
+              }
+            />
 
             {/* COMPANY ADMIN Routes */}
-            <Route path="/company-dashboard" element={
-              <RoleRoute allowedRoles={["ADMIN"]}>
-                <CompanyDashboard />
-              </RoleRoute>
-            } />
-            <Route path="/company-dashboard/projects" element={
-              <RoleRoute allowedRoles={["ADMIN", "PROJECT_MANAGER", "EMPLOYEE", "VIEWER"]}>
-                <Projects />
-              </RoleRoute>
-            } />
-            <Route path="/company-dashboard/projects/:projectId" element={
-              <RoleRoute allowedRoles={["ADMIN", "PROJECT_MANAGER", "EMPLOYEE", "VIEWER"]}>
-                <ProjectDetails />
-              </RoleRoute>
-            } />
-            <Route path="/company-dashboard/team" element={
-              <RoleRoute allowedRoles={["ADMIN"]}>
-                <TeamManagement />
-              </RoleRoute>
-            } />
+            <Route
+              path="/company-dashboard"
+              element={
+                <RoleRoute allowedRoles={["ADMIN"]}>
+                  <CompanyDashboard />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/company-dashboard/projects"
+              element={
+                <RoleRoute
+                  allowedRoles={[
+                    "ADMIN",
+                    "PROJECT_MANAGER",
+                    "EMPLOYEE",
+                    "VIEWER",
+                  ]}
+                >
+                  <Projects />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/company-dashboard/projects/:projectId"
+              element={
+                <RoleRoute
+                  allowedRoles={[
+                    "ADMIN",
+                    "PROJECT_MANAGER",
+                    "EMPLOYEE",
+                    "VIEWER",
+                  ]}
+                >
+                  <ProjectDetails />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/company-dashboard/team"
+              element={
+                <RoleRoute allowedRoles={["ADMIN"]}>
+                  <TeamManagement />
+                </RoleRoute>
+              }
+            />
 
             {/* PROJECT MANAGER Routes */}
-            <Route path="/project-manager-dashboard" element={
-              <RoleRoute allowedRoles={["PROJECT_MANAGER", "ADMIN"]}>
-                <ProjectManagerDashboard />
-              </RoleRoute>
-            } />
+            <Route
+              path="/project-manager-dashboard"
+              element={
+                <RoleRoute allowedRoles={["PROJECT_MANAGER", "ADMIN"]}>
+                  <ProjectManagerDashboard />
+                </RoleRoute>
+              }
+            />
 
             {/* EMPLOYEE Routes */}
-            <Route path="/employee-dashboard" element={
-              <RoleRoute allowedRoles={["EMPLOYEE", "ADMIN"]}>
-                <EmployeeDashboard />
-              </RoleRoute>
-            } />
+            <Route
+              path="/employee-dashboard"
+              element={
+                <RoleRoute allowedRoles={["EMPLOYEE", "ADMIN"]}>
+                  <EmployeeDashboard />
+                </RoleRoute>
+              }
+            />
 
             {/* COMMON Routes */}
             <Route path="/security" element={<Security />} />
             <Route path="/chat" element={<ChatPage />} />
-
+            <Route path="/meetings" element={<MeetingsPage />} />
           </Route>
 
           {/* Root catch-all */}
           <Route path="/" element={<LandingPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
-
         </Routes>
       </BrowserRouter>
     </AuthProvider>

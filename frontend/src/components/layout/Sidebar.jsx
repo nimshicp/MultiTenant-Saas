@@ -17,19 +17,22 @@ const Sidebar = () => {
         { name: "Dashboard", path: "/company-dashboard" },
         { name: "Projects", path: "/company-dashboard/projects" },
         { name: "Invite Team", path: "/company-dashboard/team" },
-        { name: "Chat", path: "/chat" }
+        { name: "Chat", path: "/chat" },
+        { name: "Meetings", path: "/meetings" }
       );
     } else if (role === "PROJECT_MANAGER") {
       links.push(
         { name: "Dashboard", path: "/project-manager-dashboard" },
         { name: "Projects", path: "/company-dashboard/projects" },
-        { name: "Chat", path: "/chat" }
+        { name: "Chat", path: "/chat" },
+        { name: "Meetings", path: "/meetings" }
       );
-    } else if (role === "EMPLOYEE" || role === "VIEWER") {
+    } else if (role === "EMPLOYEE") {
       links.push(
         { name: "My Dashboard", path: "/employee-dashboard" },
         { name: "Projects", path: "/company-dashboard/projects" },
-        { name: "Chat", path: "/chat" }
+        { name: "Chat", path: "/chat" },
+        { name: "Meetings", path: "/meetings" }
       );
     }
 
@@ -126,22 +129,7 @@ const Sidebar = () => {
       </nav>
 
       {/* Footer Section */}
-      <div className="relative z-10 p-8 border-t border-white/5 mt-auto">
-        <div className="rounded-[24px] bg-white/5 backdrop-blur-xl p-5 border border-white/10 hover:border-[#FF6B2C]/30 transition-all duration-300 group cursor-pointer">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-[#FF6B2C]/10 flex items-center justify-center text-[#FF6B2C] group-hover:bg-[#FF6B2C] group-hover:text-white transition-all">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-xs font-black text-white uppercase tracking-widest">Support</p>
-              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tight">Active Node</p>
-            </div>
-          </div>
-        </div>
-
-      </div>
+      
     </aside>
   );
 };
