@@ -13,13 +13,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         self.room_id = self.scope["url_route"]["kwargs"]["room_id"]
 
+        print(self.room_id, "ROOM ID")
+
         self.room_group_name = f"chat_{self.room_id}"
+
+        print(
+        self.room_group_name,
+        "ROOM GROUP NAME"
+    )
 
         room = await self.get_room()
 
+        print(room, "ROOM OBJECT")
+
         user = self.scope["user"]
 
-        # SECURITY CHECK
+        print(user, "CURRENT USER")
+
         if room.user1_id != user.id and room.user2_id != user.id:
 
             await self.close()
@@ -29,10 +39,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
-        )
+    )
+
+        print("USER ADDED TO GROUP")
 
         await self.accept()
 
+        print("WEBSOCKET ACCEPTED")
     async def disconnect(self, close_code):
 
         await self.channel_layer.group_discard(
@@ -43,10 +56,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
 
         data = json.loads(text_data)
+        
 
         message = data["message"]
+        
 
         sender = self.scope["user"]
+        
 
         saved_message = await self.save_message(
             sender,
@@ -123,11 +139,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         room = ChatRoom.objects.get(
             id=self.room_id
         )
+        
 
         return Message.objects.create(
 
             room=room,
-
+ 
             sender=sender,
 
             content=content

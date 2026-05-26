@@ -278,7 +278,6 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "")
 
-# Keep the existing runtime name used by the upload code, but allow either env key.
 AWS_REGION_NAME = os.getenv(
     "AWS_REGION_NAME",
     os.getenv("AWS_S3_REGION_NAME", "ap-south-2")

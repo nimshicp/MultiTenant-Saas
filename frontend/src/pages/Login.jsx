@@ -149,7 +149,7 @@ const Login = () => {
             {!mfaRequired ? (
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2">Email Address</label>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2">Email</label>
                   <div className="relative">
                     <input
                       type="email"
