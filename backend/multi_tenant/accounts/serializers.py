@@ -11,7 +11,7 @@ from customers.models import Tenant, Domain
 from customers.serializers import TenantSerializer
 from employee.models import Role, Employee
 from .models import UserProfile
-
+import requests
 
 User = get_user_model()
 
@@ -67,14 +67,26 @@ class RegistrationSerializer(serializers.Serializer):
         with transaction.atomic():
             tenant = Tenant.objects.create(
                 name=tenant_data.get('name'),
-                schema_name=f"tenant_{subdomain}"
-            ) # Tenant created
+                schema_name=f"tenant_{subdomain}",
+            )
 
             Domain.objects.create(
-                domain=f"{subdomain}.localhost", # ?!
+                domain=f"{subdomain}.localhost",
                 tenant=tenant,
-                is_primary=True
-            ) # Domain created
+                is_primary=True,
+            )
+
+            def setup_rag_schema():
+                response = requests.post(
+                    "http://ai-service:8000/schema/setup",
+                    json={
+                        "schema_name": tenant.schema_name,
+                    },
+                    timeout=10,
+                )
+                response.raise_for_status()
+
+            transaction.on_commit(setup_rag_schema)
 
             CurrentSubscription.objects.create(
                 tenant=tenant,
@@ -97,10 +109,10 @@ class RegistrationSerializer(serializers.Serializer):
 
             with schema_context(tenant.schema_name):
                 Employee.objects.create(
-                user=user,
-                tenant=tenant,
-                role=Role.ADMIN
-    )
+                    user=user,
+                    tenant=tenant,
+                    role=Role.ADMIN,
+                )
             return user
 
 

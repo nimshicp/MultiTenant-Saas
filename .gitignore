@@ -1,0 +1,20 @@
+# Environment files
+.env
+.env.*
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Celery
+celerybeat-schedule
+celerybeat-schedule-shm
+celerybeat-schedule-wal
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -18,6 +18,7 @@ import ResetPassword from "./pages/ResetPassword";
 import LandingPage from "./pages/LandingPage";
 import Security from "./pages/Security";
 import ChatPage from "./pages/ChatPage";
+import RagPage from "./pages/RagPage";
 
 // Layout & Protection
 import MainLayout from "./components/layout/MainLayout";
@@ -148,6 +149,14 @@ function App() {
             {/* COMMON Routes */}
             <Route path="/security" element={<Security />} />
             <Route path="/chat" element={<ChatPage />} />
+            <Route
+              path="/rag"
+              element={
+                <RoleRoute allowedRoles={["ADMIN", "PROJECT_MANAGER", "EMPLOYEE", "VIEWER"]}>
+                  <RagPage />
+                </RoleRoute>
+              }
+            />
             <Route path="/meetings" element={<MeetingsPage />} />
           </Route>
 

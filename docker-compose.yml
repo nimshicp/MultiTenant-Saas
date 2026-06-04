@@ -1,0 +1,140 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: multi_tenant_postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-multi_tenant_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nims@123}
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-multi_tenant_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: multi_tenant_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: multi_tenant_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  backend:
+    build:
+      context: ./backend/multi_tenant
+      dockerfile: Dockerfile
+    container_name: multi_tenant_backend
+    command: daphne -b 0.0.0.0 -p 8000 multi_tenant.asgi:application
+    volumes:
+      - ./backend/multi_tenant:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DB_NAME: ${DB_NAME:-multi_tenant_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-nims@123}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DJANGO_SETTINGS_MODULE: multi_tenant.settings
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+
+  backend-worker:
+    build:
+      context: ./backend/multi_tenant
+      dockerfile: Dockerfile
+    container_name: multi_tenant_backend_worker
+    command: celery -A multi_tenant worker -l info --pool=solo
+    volumes:
+      - ./backend/multi_tenant:/app
+    environment:
+      DB_NAME: ${DB_NAME:-multi_tenant_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-nims@123}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DJANGO_SETTINGS_MODULE: multi_tenant.settings
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+
+  backend-beat:
+    build:
+      context: ./backend/multi_tenant
+      dockerfile: Dockerfile
+    container_name: multi_tenant_backend_beat
+    command: celery -A multi_tenant beat -l info
+    volumes:
+      - ./backend/multi_tenant:/app
+    environment:
+      DB_NAME: ${DB_NAME:-multi_tenant_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-nims@123}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DJANGO_SETTINGS_MODULE: multi_tenant.settings
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+
+  
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: multi_tenant_ai_service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./ai-service:/app
+    ports:
+      - "8001:8000"
+    environment:
+      DB_NAME: ${DB_NAME:-multi_tenant_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-nims@123}
+      DB_HOST: postgres
+      DB_PORT: 5432
+
+      GROK_API_KEY: ${GROK_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:

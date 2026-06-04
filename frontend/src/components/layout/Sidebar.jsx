@@ -17,6 +17,7 @@ const Sidebar = () => {
         { name: "Dashboard", path: "/company-dashboard" },
         { name: "Projects", path: "/company-dashboard/projects" },
         { name: "Invite Team", path: "/company-dashboard/team" },
+        { name: "RAG Assistant", path: "/rag" },
         { name: "Chat", path: "/chat" },
         { name: "Meetings", path: "/meetings" }
       );
@@ -24,6 +25,7 @@ const Sidebar = () => {
       links.push(
         { name: "Dashboard", path: "/project-manager-dashboard" },
         { name: "Projects", path: "/company-dashboard/projects" },
+        { name: "RAG Assistant", path: "/rag" },
         { name: "Chat", path: "/chat" },
         { name: "Meetings", path: "/meetings" }
       );
@@ -31,6 +33,14 @@ const Sidebar = () => {
       links.push(
         { name: "My Dashboard", path: "/employee-dashboard" },
         { name: "Projects", path: "/company-dashboard/projects" },
+        { name: "RAG Assistant", path: "/rag" },
+        { name: "Chat", path: "/chat" },
+        { name: "Meetings", path: "/meetings" }
+      );
+    } else if (role === "VIEWER") {
+      links.push(
+        { name: "Projects", path: "/company-dashboard/projects" },
+        { name: "RAG Assistant", path: "/rag" },
         { name: "Chat", path: "/chat" },
         { name: "Meetings", path: "/meetings" }
       );

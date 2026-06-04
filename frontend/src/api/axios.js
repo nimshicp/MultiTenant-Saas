@@ -34,10 +34,20 @@ const api = axios.create({
  */
 api.interceptors.request.use(
   (config) => {
+    config.headers = config.headers || {};
+
     const accessToken = localStorage.getItem("access");
 
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+      if (typeof config.headers.delete === "function") {
+        config.headers.delete("Content-Type");
+      } else {
+        delete config.headers["Content-Type"];
+      }
     }
 
     // Recalculate baseURL in case company changes after login

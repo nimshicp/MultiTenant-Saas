@@ -3,6 +3,9 @@ from rest_framework import serializers
 from .models import Meeting
 
 from accounts.models import User
+from datetime import timedelta
+
+from meeting.tasks import send_meeting_reminders
 
 
 class ParticipantSerializer(serializers.ModelSerializer):
@@ -128,6 +131,15 @@ class CreateMeetingSerializer(serializers.ModelSerializer):
 
         # organizer also becomes participant
         meeting.participants.add(organizer)
+        reminder_time = (
+            meeting.start_time
+            - timedelta(minutes=30)
+        )
+
+        send_meeting_reminders.apply_async(
+        eta=reminder_time
+        )
+
 
         return meeting
     

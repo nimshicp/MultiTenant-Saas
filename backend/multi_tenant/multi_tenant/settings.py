@@ -11,11 +11,24 @@ load_dotenv()
 SECRET_KEY = 'django-insecure-replace-in-production'
 DEBUG = True
 
-ALLOWED_HOSTS = ['.localhost', '127.0.0.1']
+
+ALLOWED_HOSTS = ['.localhost', '127.0.0.1', 'backend', '0.0.0.0']
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+]
+
+# Allow any tenant subdomain running on your React dev environment port
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://.*\.localhost:5173$",
+    r"^http://localhost:5173$",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://*.localhost:5173", # 🚀 FIX: Trust CSRF tokens coming from tenant subdomains
 ]
 
 
@@ -26,14 +39,6 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://.*\.localhost:5173$",
-]
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -68,7 +73,7 @@ SHARED_APPS = [
 
     'corsheaders',
     'channels',
-    'meeting'
+    
 ]
 
 TENANT_APPS = [
@@ -77,6 +82,8 @@ TENANT_APPS = [
     'employee', 
     'projects',
     'chat',
+    'meeting',
+    'documents',
     
 ]
 
@@ -153,8 +160,8 @@ DATABASES = {
         'NAME': os.getenv("DB_NAME", "multi_tenant_db"),
         'USER': os.getenv("DB_USER", "postgres"),
         'PASSWORD': os.getenv("DB_PASSWORD", ""),
-        'HOST': os.getenv("DB_HOST", "localhost"),
-        'PORT': os.getenv("DB_PORT", "5433"),
+        'HOST': os.getenv("DB_HOST", "postgres"),
+        'PORT': os.getenv("DB_PORT", "5432"),     
     }
 }
 
@@ -218,10 +225,10 @@ DEFAULT_FROM_EMAIL = os.getenv(
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_SECRET')
 
-CELERY_BROKER_URL = (
+CELERY_BROKER_URL = os.getenv(
+    "CELERY_BROKER_URL",
     "amqp://guest:guest@localhost:5672//"
 )
-
 CELERY_ACCEPT_CONTENT = ["json"]
 
 CELERY_TASK_SERIALIZER = "json"
@@ -266,6 +273,14 @@ CELERY_BEAT_SCHEDULE = {
         "task": "projects.tasks.send_admin_project_alerts",
         "schedule": crontab(hour=9, minute=0),
     },
+    
+    # existing schedules
+
+    "meeting-reminders": {
+        "task": "meeting.tasks.send_meeting_reminders",
+        "schedule": crontab(hour=9, minute=0),
+    },
+
 }
 
 
@@ -288,17 +303,19 @@ AWS_S3_CUSTOM_DOMAIN = os.getenv(
     f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_REGION_NAME}.amazonaws.com"
 )
 
+AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://ai-service:8000")
+
 
 CHANNEL_LAYERS = {
-
     "default": {
-
-        "BACKEND":
-            "channels_redis.core.RedisChannelLayer",
-
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [
+                (
+                    os.getenv("REDIS_HOST", "127.0.0.1"),
+                    int(os.getenv("REDIS_PORT", 6379))
+                )
+            ],
         },
     },
 }
