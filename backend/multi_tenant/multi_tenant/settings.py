@@ -271,7 +271,7 @@ CELERY_BEAT_SCHEDULE = {
     # Admin alerts
     "admin-project-alerts": {
         "task": "projects.tasks.send_admin_project_alerts",
-        "schedule": crontab(hour=9, minute=0),
+        "schedule": crontab(hour=9, minute=0) ,
     },
     
     # existing schedules

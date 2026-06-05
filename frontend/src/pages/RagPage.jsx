@@ -13,7 +13,7 @@ const RagPage = () => {
   const tenantSchema = useMemo(() => getCurrentTenantSchema(), []);
   const role = user?.role || "";
   const isAdmin = role === "ADMIN";
-  const canAsk = ["ADMIN", "PROJECT_MANAGER", "EMPLOYEE", "VIEWER"].includes(role);
+  const canAsk = ["ADMIN", "PROJECT_MANAGER", "EMPLOYEE"].includes(role);
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
