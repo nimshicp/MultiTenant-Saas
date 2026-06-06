@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -6,601 +6,237 @@ const LandingPage = () => {
   const { isAuthenticated, user, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect authenticated users to their dashboards
   useEffect(() => {
     if (!loading && isAuthenticated && user) {
       if (user.role === "SUPERADMIN") navigate("/platform-admin");
       else if (user.role === "ADMIN") navigate("/company-dashboard");
-      else if (user.role === "PROJECT_MANAGER")
-        navigate("/project-manager-dashboard");
+      else if (user.role === "PROJECT_MANAGER") navigate("/project-manager-dashboard");
       else if (user.role === "EMPLOYEE") navigate("/employee-dashboard");
     }
   }, [isAuthenticated, user, loading, navigate]);
 
-  // Smooth scroll to top on mount
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  // State for meeting scheduler modal
-  const [showScheduler, setShowScheduler] = useState(false);
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
-  const [meetingTitle, setMeetingTitle] = useState("");
-
-  const handleScheduleMeeting = (e) => {
-    e.preventDefault();
-    alert(
-      `Meeting "${meetingTitle}" scheduled for ${selectedDate} at ${selectedTime}`,
-    );
-    setShowScheduler(false);
-    setMeetingTitle("");
-    setSelectedDate("");
-    setSelectedTime("");
-  };
-
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-white font-sans overflow-x-hidden selection:bg-[#FF6B2C] selection:text-white">
-      {/* Dark theme background glows */}
-      <div className="fixed top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[#FF6B2C]/5 rounded-full blur-[150px] pointer-events-none"></div>
-      <div className="fixed bottom-[-15%] right-[-5%] w-[45%] h-[45%] bg-[#FF6B2C]/5 rounded-full blur-[140px] pointer-events-none"></div>
-      <div className="fixed top-[30%] right-[20%] w-80 h-80 bg-[#FF6B2C]/10 rounded-full blur-[100px] pointer-events-none"></div>
+    <div className="min-h-screen bg-[#030303] text-zinc-100 font-sans selection:bg-[#FF6B2C]/30 selection:text-[#FF6B2C] overflow-x-hidden relative">
+      
+      {/* --- RE-FIXED BACKGROUND & PLANETARY HORIZON LAYER SYSTEM --- */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Subtle top grid texture pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff01_1px,transparent_1px),linear-gradient(to_bottom,#ffffff01_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_40%_at_50%_20%,#000_70%,transparent_100%)] opacity-70"></div>
+        
+        {/* Ambient Top Glow behind header text */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[400px] bg-gradient-to-b from-[#FF6B2C]/0.05 to-transparent blur-[100px]"></div>
+
+        {/* THE VETRA SEMI-CIRCLE PLANETARY HORIZON
+          Explicitly placed at 52vh to anchor directly behind the primary action buttons 
+          and curve gracefully right under the header text.
+        */}
+        <div className="absolute top-[52vh] left-1/2 -translate-x-1/2 w-[220vw] sm:w-[170vw] lg:w-[130vw] aspect-[2.5/1] rounded-[100%] bg-gradient-to-t from-[#030303] via-[#0b0604] to-[#170a04]/40 border-t-[1.5px] border-[#FF6B2C]/35 shadow-[0_-20px_80px_rgba(255,107,44,0.15)] opacity-0 scale-[0.96] origin-top animate-[vetraHorizonReveal_1.8s_cubic-bezier(0.16,1,0.3,1)_0.2s_forwards]">
+          {/* Volumetric atmosphere atmospheric fog mask immediately below the arc line */}
+          <div className="absolute inset-x-0 top-0 h-[150px] bg-gradient-to-b from-[#FF6B2C]/12 via-[#FF6B2C]/0.01 to-transparent blur-[30px] rounded-[100%]"></div>
+        </div>
+      </div>
 
       {/* --- NAVBAR --- */}
-      <nav className="relative z-50 flex items-center justify-between px-6 md:px-12 py-5 max-w-7xl mx-auto border-b border-white/5 bg-[#0A0A0F]/80 backdrop-blur-xl sticky top-0">
-        <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 bg-gradient-to-br from-[#FF6B2C] to-[#FF8533] rounded-xl flex items-center justify-center shadow-lg shadow-[#FF6B2C]/20">
-            <span className="text-white text-xl font-bold">B</span>
+      <nav className="relative z-50 flex items-center justify-between px-6 md:px-12 py-6 max-w-7xl mx-auto opacity-0 animate-[fadeIn_0.8s_ease-out_0.2s_forwards]">
+        {/* Brand Identity */}
+        <div className="flex items-center gap-3.5 group cursor-pointer">
+          <div className="h-10 w-10 bg-[#FF6B2C] rounded-[14px] flex items-center justify-center shadow-[0_0_25px_rgba(255,107,44,0.3)] hover:scale-105 transition-transform duration-300">
+            <span className="text-white font-black italic text-xl tracking-tighter">B</span>
           </div>
-          <span className="text-2xl font-bold tracking-tighter bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-            Binford
-          </span>
+          <div className="flex flex-col justify-center">
+            <span className="text-xl font-extrabold tracking-tight text-white leading-none">Binford</span>
+            <span className="text-[10px] tracking-[0.25em] text-zinc-500 font-bold uppercase mt-1 leading-none">Enterprise</span>
+          </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
-          <a href="#home" className="hover:text-[#FF6B2C] transition-colors">
-            Home
-          </a>
-          <a
-            href="#features"
-            className="hover:text-[#FF6B2C] transition-colors"
-          >
-            Features
-          </a>
-          <a
-            href="#services"
-            className="hover:text-[#FF6B2C] transition-colors"
-          >
-            Services
-          </a>
-          <a href="#team" className="hover:text-[#FF6B2C] transition-colors">
-            Team
-          </a>
-          <a href="#contact" className="hover:text-[#FF6B2C] transition-colors">
-            Contact
-          </a>
+        <div className="hidden md:flex items-center gap-10 text-xs tracking-widest font-semibold text-zinc-400 uppercase">
+          {["Features", "Solutions", "Pricing", "Contact"].map((item) => (
+            <a key={item} href={`#${item.toLowerCase()}`} className="hover:text-white transition-colors duration-200">
+              {item}
+            </a>
+          ))}
         </div>
 
-        <div className="flex items-center gap-4">
-          <Link
-            to="/login"
-            className="text-sm font-semibold text-gray-300 hover:text-white transition px-3 py-2 rounded-full"
-          >
-            Log In
+        <div className="flex items-center gap-6">
+          <Link to="/login" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors duration-200">
+            Log in
           </Link>
-          <Link
-            to="/signup"
-            className="bg-gradient-to-r from-[#FF6B2C] to-[#FF8533] text-white text-sm font-semibold px-6 py-2.5 rounded-full shadow-lg shadow-[#FF6B2C]/25 hover:shadow-xl transition-all active:scale-95"
-          >
-            Sign Up
+          <Link to="/signup" className="bg-[#FF6B2C] hover:bg-[#e55a1f] text-white text-xs font-bold tracking-wider uppercase px-6 py-2.5 rounded-full shadow-lg shadow-[#FF6B2C]/10 transition-all duration-300">
+            Sign up
           </Link>
         </div>
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <section
-        id="home"
-        className="relative pt-20 pb-28 px-6 md:px-12 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-14 lg:gap-20 z-10"
-      >
-        <div className="flex-1 space-y-6">
-          <span className="inline-flex items-center gap-2 text-[#FF6B2C] bg-[#FF6B2C]/10 text-[11px] font-semibold uppercase tracking-wider px-4 py-1.5 rounded-full border border-[#FF6B2C]/20 backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B2C]"></span>
-            Project Management • Analytics • Multi-Tenant • Security
-          </span>
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tighter leading-[1.1]">
-            Manage Your{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B2C] to-[#FF8533]">
-              Business Empire
-            </span>
-          </h1>
-          <p className="text-lg text-gray-400 max-w-lg leading-relaxed font-medium">
-            Streamline your company operations with our advanced AI-poweredmulti-tenant business management platform. Manage employees,projects, tasks, finances, and client workflows in one secure and
-            scalable system. Monitor performance, automate processes insights to grow your business with confidence.
-          </p>
-          <div className="flex flex-wrap gap-4 pt-2">
-            <button
-              onClick={() => setShowScheduler(true)}
-              className="inline-flex items-center bg-gradient-to-r from-[#FF6B2C] to-[#FF8533] text-white font-semibold px-7 py-3.5 rounded-xl hover:shadow-lg hover:shadow-[#FF6B2C]/25 transition-all"
-            >
-              Schedule Meeting →
-            </button>
-            <button className="inline-flex items-center border border-white/20 bg-white/5 text-white font-medium px-7 py-3.5 rounded-xl hover:bg-white/10 transition-all">
-              Learn More
-            </button>
-          </div>
-          <div className="flex items-center gap-8 pt-4">
-            <div className="flex -space-x-2">
-              <img
-                className="w-8 h-8 rounded-full ring-2 ring-[#0A0A0F] object-cover"
-                src="https://randomuser.me/api/portraits/women/68.jpg"
-                alt="user"
-              />
-              <img
-                className="w-8 h-8 rounded-full ring-2 ring-[#0A0A0F] object-cover"
-                src="https://randomuser.me/api/portraits/men/32.jpg"
-                alt="user"
-              />
-              <img
-                className="w-8 h-8 rounded-full ring-2 ring-[#0A0A0F] object-cover"
-                src="https://randomuser.me/api/portraits/women/44.jpg"
-                alt="user"
-              />
-            </div>
-            <span className="font-medium text-gray-400">
-              Trusted by 10,000+ teams
-            </span>
-          </div>
+      <section className="relative z-10 pt-20 pb-16 px-6 flex flex-col items-center text-center">
+        
+        {/* Version Badge */}
+        <div className="mb-8 inline-flex items-center gap-2 bg-zinc-950/80 border border-zinc-800/80 px-4 py-1.5 rounded-full text-xs font-medium backdrop-blur-md opacity-0 animate-[slideDown_0.6s_cubic-bezier(0.16,1,0.3,1)_0.4s_forwards]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B2C] animate-pulse"></span>
+          <span className="text-zinc-400">Binford AI v2.0 is live</span>
+          <span className="text-zinc-200 border-l border-zinc-800 pl-2 ml-1 cursor-pointer hover:text-white transition-colors">Read updates →</span>
         </div>
 
-        <div className="flex-1 relative">
-          <div className="absolute -inset-4 bg-gradient-to-tr from-[#FF6B2C]/20 to-[#FF8533]/10 rounded-3xl blur-3xl animate-pulse"></div>
-          <div className="relative bg-white/5 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/10 p-2 overflow-hidden">
-            <img
-              src="https://images.unsplash.com/photo-1551434678-e076c2236a9a?q=80&w=2070&auto=format&fit=crop"
-              alt="Team collaboration"
-              className="w-full h-auto rounded-2xl object-cover hover:scale-[1.02] transition duration-700"
-              onError={(e) => {
-                e.target.src =
-                  "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?q=80&w=800&auto=format&fit=crop";
-              }}
-            />
-          </div>
-        </div>
-      </section>
+        {/* Main Title Heading */}
+        <h1 className="text-5xl md:text-8xl font-black tracking-tight max-w-5xl leading-[1.05] mb-8 bg-gradient-to-b from-white via-zinc-100 to-zinc-500 bg-clip-text text-transparent opacity-0 translate-y-12 animate-[slideUp_1s_cubic-bezier(0.16,1,0.3,1)_0.5s_forwards]">
+          Run Your Projects <br />On Autopilot
+        </h1>
 
-      {/* --- PARTNER LOGOS STRIP --- */}
-      <div className="border-y border-white/5 bg-white/[0.02] py-8 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-5 gap-8 text-center">
-          <PartnerLogo name="Jerde Group" />
-          <PartnerLogo name="Collier LLC" />
-          <PartnerLogo name="Walker Inc" />
-          <PartnerLogo name="Hudson Inc" />
-          <PartnerLogo name="Binford Ltd" />
-        </div>
-      </div>
+        {/* Subtitle Description */}
+        <p className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-2xl mb-12 font-normal leading-relaxed opacity-0 translate-y-6 animate-[slideUp_1s_cubic-bezier(0.16,1,0.3,1)_0.7s_forwards]">
+          The intelligent tracking workspace for operations, teams, and resource management. Let an AI assistant map timelines, catch blockers, and update pipelines instantly.
+        </p>
 
-      {/* --- KEY FEATURES SECTION --- */}
-      <section
-        id="features"
-        className="py-28 px-6 max-w-7xl mx-auto relative z-10"
-      >
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-[#FF6B2C] text-sm font-semibold uppercase tracking-wider bg-[#FF6B2C]/10 px-4 py-1 rounded-full">
-            Key Features
-          </span>
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-white mt-5">
-            Powerful Tools for Modern Management
-          </h2>
-          <p className="text-gray-400 text-lg mt-4">
-            Discover a comprehensive suite of tools designed to optimize your
-            project lifecycle and mitigate operational risks.
-          </p>
+        {/* Action Button Matrix */}
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mb-36 opacity-0 translate-y-4 animate-[slideUp_1s_cubic-bezier(0.16,1,0.3,1)_0.9s_forwards]">
+          <button className="w-full sm:w-auto px-8 py-4 rounded-full border border-zinc-800/80 bg-zinc-950/40 backdrop-blur-md hover:bg-zinc-900/60 text-zinc-300 transition-all text-sm font-medium shadow-xl">
+            Watch Demo
+          </button>
+          <Link to="/signup" className="w-full sm:w-auto bg-[#FF6B2C] hover:bg-[#e55a1f] text-white text-sm font-semibold px-10 py-4 rounded-full shadow-2xl shadow-[#FF6B2C]/20 transition-all">
+            Get started for free
+          </Link>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          <FeatureCard
-            icon="📅"
-            title="Meeting Scheduler"
-            description="Seamless calendar integration with automated reminders and conflict detection for efficient team coordination."
-            action="Schedule"
-            onAction={() => setShowScheduler(true)}
-          />
-          <FeatureCard
-            icon="📊"
-            title="Project Management"
-            description="Track milestones, assign tasks, monitor progress with real-time dashboards and analytics."
-            action="Track Projects"
-          />
-          <FeatureCard
-            icon="🤝"
-            title="Team Collaboration"
-            description="Built-in chat, file sharing, and collaborative workspaces for seamless communication."
-            action="Collaborate"
-          />
-        </div>
-      </section>
-
-      {/* --- NFT / PLATFORM AGGREGATOR SECTION --- */}
-      <section className="py-24 px-6 max-w-7xl mx-auto relative z-10">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tighter">
-              Comprehensive Oversight. Manage every project from one portal.
-            </h2>
-            <p className="text-gray-400 text-lg">
-              Centralized risk monitoring and resource allocation — All your
-              tenant data unified in one powerful interface.
-            </p>
-            <div className="flex gap-4 pt-4">
-              <button className="bg-gradient-to-r from-[#FF6B2C] to-[#FF8533] px-8 py-3 rounded-full text-sm font-semibold">
-                Buy
-              </button>
-              <button className="border border-white/20 px-8 py-3 rounded-full text-sm font-semibold hover:bg-white/5 transition">
-                Send
-              </button>
-            </div>
-          </div>
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#FF6B2C]/20 to-transparent rounded-3xl blur-2xl"></div>
-            <div className="relative bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-white/5 text-center">
-                  <span className="text-3xl block mb-2">🛡️</span>
-                  <p className="text-sm font-medium">Risk Shield</p>
+        {/* --- HIGH FIDELITY DASHBOARD COMPONENT --- */}
+        <div className="w-full max-w-5xl mx-auto opacity-0 translate-y-24 animate-[slideUp_1.4s_cubic-bezier(0.16,1,0.3,1)_1.1s_forwards]">
+          <div className="relative bg-[#0b0b0c] border border-zinc-800/80 rounded-2xl shadow-[0_40px_140px_rgba(0,0,0,0.95)] p-1 overflow-hidden">
+            <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-[#FF6B2C]/40 to-transparent"></div>
+            
+            <div className="bg-[#060608] rounded-[12px] p-6 sm:p-8 text-left">
+              {/* Dashboard Internal Workspace Header */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-zinc-900 pb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#FF6B2C]/10 border border-[#FF6B2C]/20 flex items-center justify-center text-[#FF6B2C] font-mono text-xs font-bold shadow-inner">AI</div>
+                  <div className="space-y-0.5">
+                    <div className="text-sm font-semibold text-zinc-200 tracking-tight">Workspace Cluster Tracker</div>
+                    <div className="text-[10px] text-zinc-500 font-mono tracking-wider">NODE_STATUS // DEPLOYED_OPTIMAL</div>
+                  </div>
                 </div>
-                <div className="p-4 rounded-xl bg-white/5 text-center">
-                  <span className="text-3xl block mb-2">📈</span>
-                  <p className="text-sm font-medium">Growth Analytics</p>
+                <span className="text-[10px] tracking-wider bg-zinc-900 border border-zinc-800 text-zinc-400 px-3 py-1.5 rounded-lg font-mono">
+                  Sprint Status: 84% Completed
+                </span>
+              </div>
+
+              {/* Data Cards Block */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                
+                {/* Micro Metric Card 1 */}
+                <div className="bg-zinc-900/20 border border-zinc-900/60 rounded-xl p-5 flex flex-col justify-between h-36">
+                  <span className="text-[10px] text-zinc-500 font-bold tracking-wider font-mono uppercase">Resource Saturation</span>
+                  <div className="space-y-3">
+                    <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-[#FF6B2C] to-orange-400 rounded-full animate-[barLoad75_1.5s_cubic-bezier(0.16,1,0.3,1)_forwards] origin-left"></div>
+                    </div>
+                    <div className="h-1.5 w-4/5 bg-zinc-900 rounded-full overflow-hidden">
+                      <div className="h-full bg-zinc-700/50 rounded-full animate-[barLoad50_1.5s_cubic-bezier(0.16,1,0.3,1)_forwards] origin-left"></div>
+                    </div>
+                  </div>
                 </div>
-                <div className="p-4 rounded-xl bg-white/5 text-center">
-                  <span className="text-3xl block mb-2">🏗️</span>
-                  <p className="text-sm font-medium">Site Monitor</p>
+
+                {/* Micro Metric Card 2 (Vetra Core Animated Chart Blocks) */}
+                <div className="bg-zinc-900/20 border border-zinc-900/60 rounded-xl p-5 flex flex-col justify-between h-36">
+                  <span className="text-[10px] text-zinc-500 font-bold tracking-wider font-mono uppercase">Delivery Momentum</span>
+                  <div className="h-14 w-full border-b border-l border-zinc-900/80 flex items-end gap-3 px-2">
+                    <div className="w-full bg-[#FF6B2C]/20 rounded-sm animate-[barGrowOne_1.4s_cubic-bezier(0.16,1,0.3,1)_forwards] origin-bottom"></div>
+                    <div className="w-full bg-[#FF6B2C]/40 rounded-sm animate-[barGrowTwo_1.4s_cubic-bezier(0.16,1,0.3,1)_forwards] origin-bottom"></div>
+                    <div className="w-full bg-[#FF6B2C] rounded-sm animate-[barGrowThree_1.4s_cubic-bezier(0.16,1,0.3,1)_forwards] origin-bottom"></div>
+                  </div>
                 </div>
-                <div className="p-4 rounded-xl bg-white/5 text-center">
-                  <span className="text-3xl block mb-2">📋</span>
-                  <p className="text-sm font-medium">Audit Logs</p>
+
+                {/* Micro Metric Card 3 */}
+                <div className="bg-zinc-900/20 border border-zinc-900/60 rounded-xl p-5 flex flex-col justify-between h-36">
+                  <span className="text-[10px] text-zinc-500 font-bold tracking-wider font-mono uppercase">Assistant Chronicler</span>
+                  <div className="text-[11px] space-y-2 font-mono">
+                    <p className="text-emerald-500 flex items-center gap-2"><span>✓</span> Timeline optimized</p>
+                    <p className="text-amber-500 flex items-center gap-2"><span>!</span> Capacity warning isolated</p>
+                    <p className="text-zinc-600 flex items-center gap-2"><span>...</span> Processing status</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* --- PROJECT MANAGEMENT DASHBOARD PREVIEW --- */}
-      <section className="py-24 px-6 max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold tracking-tighter">
-            Project Management Dashboard
-          </h2>
-          <p className="text-gray-400 mt-3">
-            Real-time insights into your team's progress
-          </p>
-        </div>
-        <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 overflow-hidden">
-          <div className="p-6 border-b border-white/10 flex justify-between items-center">
-            <div className="flex gap-4">
-              <span className="text-sm font-medium text-[#FF6B2C]">
-                All Projects
-              </span>
-              <span className="text-sm text-gray-400">In Progress</span>
-              <span className="text-sm text-gray-400">Completed</span>
-            </div>
-            <button className="text-sm bg-[#FF6B2C]/20 text-[#FF6B2C] px-4 py-1.5 rounded-full">
-              + New Project
-            </button>
-          </div>
-          <div className="p-6">
-            <ProjectRow
-              project="NFT Marketplace Launch"
-              progress={75}
-              team="8 members"
-              deadline="Dec 15, 2024"
-            />
-            <ProjectRow
-              project="Mobile App Redesign"
-              progress={45}
-              team="5 members"
-              deadline="Jan 10, 2025"
-            />
-            <ProjectRow
-              project="Smart Contract Audit"
-              progress={90}
-              team="3 members"
-              deadline="Nov 30, 2024"
-            />
-            <ProjectRow
-              project="Community Dashboard"
-              progress={30}
-              team="6 members"
-              deadline="Feb 1, 2025"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* --- TEAM SECTION --- */}
-      <section
-        id="team"
-        className="py-28 bg-white/[0.02] border-y border-white/5 relative z-10"
-      >
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold tracking-tighter">
-              Meet Our Team
-            </h2>
-            <p className="text-gray-400 text-lg mt-2">
-              Our expert team is dedicated to providing the best solutions for
-              your business needs.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <TeamCard
-              name="Robert Fox"
-              role="Chief Technology Officer"
-              img="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=400&auto=format&fit=crop"
-            />
-            <TeamCard
-              name="Jenny Wilson"
-              role="Senior Project Manager"
-              img="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop"
-            />
-            <TeamCard
-              name="Guy Hawkins"
-              role="Lead Risk Analyst"
-              img="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&auto=format&fit=crop"
-            />
-          </div>
-          <div className="text-center mt-12">
-            <button className="border border-white/20 bg-white/5 text-white hover:bg-white/10 px-8 py-2.5 rounded-full text-sm font-medium transition">
-              View All Members
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* --- CALL TO ACTION --- */}
-      <section className="py-28 px-6 max-w-5xl mx-auto text-center relative z-10">
-        <div className="bg-gradient-to-r from-[#FF6B2C]/10 to-[#FF8533]/10 backdrop-blur-md rounded-3xl p-12 md:p-16 border border-white/10">
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tighter">
-            Join Our Platform To Scale Safely.
-          </h2>
-          <p className="text-gray-400 max-w-xl mx-auto mt-4">
-            Take the first step towards a more secure and efficient project
-            management experience. Register now and start managing your risks
-            like a pro.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4 mt-8">
-            <button className="bg-white text-black font-semibold px-8 py-3 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
-               Download on the App Store
-            </button>
-            <button className="bg-white text-black font-semibold px-8 py-3 rounded-xl hover:bg-gray-100 transition flex items-center gap-2">
-               Get it on Google Play
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* --- FOOTER --- */}
-      <footer className="border-t border-white/5 pt-16 pb-8 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-10">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 bg-gradient-to-br from-[#FF6B2C] to-[#FF8533] rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">B</span>
+              {/* Integrated Bottom Operational Log */}
+              <div className="bg-zinc-900/10 border border-zinc-900/50 rounded-xl p-5">
+                <div className="flex items-center justify-between mb-3.5 text-[10px] text-zinc-500 font-bold tracking-widest font-mono uppercase">
+                  <span>Active Automation Pipeline</span>
+                  <span className="text-[#FF6B2C] flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-[#FF6B2C] rounded-full animate-ping"></span> Live Syncing
+                  </span>
+                </div>
+                <div className="space-y-2.5">
+                  {[
+                    { n: "Core infrastructure scaling & indexing parameters", s: "Processing", c: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+                    { n: "Project milestone auto-generation sequences", s: "Completed", c: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+                    { n: "Resource bottleneck predictive machine matrix", s: "Standby", c: "bg-zinc-900 text-zinc-500 border-zinc-800" }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-xs bg-[#030304]/60 p-3 rounded-lg border border-zinc-900/60 hover:border-zinc-800/80 transition-colors duration-300">
+                      <span className="text-zinc-400 truncate max-w-[70%] sm:max-w-[80%]">{item.n}</span>
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-mono border ${item.c}`}>{item.s}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <span className="text-xl font-bold">Binford Ltd.</span>
-            </div>
-            <p className="text-gray-500 text-sm mt-4">Follow us</p>
-            <div className="flex gap-4 mt-3">
-              <span className="text-gray-400 hover:text-[#FF6B2C] cursor-pointer text-sm">
-                Facebook
-              </span>
-              <span className="text-gray-400 hover:text-[#FF6B2C] cursor-pointer text-sm">
-                Twitter
-              </span>
-              <span className="text-gray-400 hover:text-[#FF6B2C] cursor-pointer text-sm">
-                LinkedIn
-              </span>
+
             </div>
           </div>
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
-              Product
-            </h4>
-            <ul className="mt-4 space-y-2 text-gray-500 text-sm">
-              <li>
-                <a href="#" className="hover:text-[#FF6B2C] transition">
-                  Features
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-[#FF6B2C] transition">
-                  Pricing
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-[#FF6B2C] transition">
-                  Security
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
-              Company
-            </h4>
-            <ul className="mt-4 space-y-2 text-gray-500 text-sm">
-              <li>
-                <a href="#" className="hover:text-[#FF6B2C] transition">
-                  About
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-[#FF6B2C] transition">
-                  Careers
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-[#FF6B2C] transition">
-                  Press
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
-              Legal
-            </h4>
-            <ul className="mt-4 space-y-2 text-gray-500 text-sm">
-              <li>
-                <a href="#" className="hover:text-[#FF6B2C] transition">
-                  Privacy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-[#FF6B2C] transition">
-                  Terms
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-[#FF6B2C] transition">
-                  Cookie Policy
-                </a>
-              </li>
-            </ul>
-          </div>
         </div>
-        <div className="text-center text-gray-600 text-xs border-t border-white/5 mt-14 pt-8">
-          © 2024 Binford Ltd. All rights reserved.
+      </section>
+
+      {/* --- FEATURES GRID --- */}
+      <section id="features" className="relative z-10 py-32 px-6 max-w-7xl mx-auto border-t border-zinc-900/40">
+        <div className="text-center mb-20">
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-5">Built for Absolute Clarity</h2>
+          <p className="text-zinc-400 max-w-xl mx-auto text-base sm:text-lg">Focus on high-level strategy while Binford Enterprise handles the tracking and operational updates.</p>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            { t: "Automated Tracking", d: "Your AI assistant cross-references commits, docs, and notes to update project status smoothly." },
+            { t: "Predictive Blockers", d: "Identify scheduling risks and capacity issues days before they affect your delivery deadlines." },
+            { t: "Resource Mapping", d: "Seamlessly align tasks to team availability to balance workloads and ensure delivery speed." }
+          ].map((f, i) => (
+            <div key={i} className="p-8 rounded-2xl bg-zinc-900/10 border border-zinc-900/60 hover:border-zinc-700/80 transition-all duration-300 group">
+              <div className="w-9 h-9 bg-zinc-900 border border-zinc-800 text-zinc-500 rounded-lg mb-6 flex items-center justify-center font-mono text-xs group-hover:text-[#FF6B2C] group-hover:border-[#FF6B2C]/30 transition-colors">
+                // 0{i+1}
+              </div>
+              <h3 className="text-lg font-bold text-zinc-100 mb-3">{f.t}</h3>
+              <p className="text-zinc-500 leading-relaxed text-sm">{f.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* --- FOOTER ENGINE --- */}
+      <footer className="relative z-10 border-t border-zinc-900/60 pt-16 pb-10 px-6 max-w-7xl mx-auto text-center text-zinc-600 text-xs">
+        <p>© 2026 Binford Enterprise Inc. All operational parameters reserved.</p>
       </footer>
 
-      {/* --- MEETING SCHEDULER MODAL --- */}
-      {showScheduler && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setShowScheduler(false)}
-          ></div>
-          <div className="relative bg-[#0A0A0F] border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl">
-            <button
-              onClick={() => setShowScheduler(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl"
-            >
-              ×
-            </button>
-            <h3 className="text-2xl font-bold mb-6">Schedule a Meeting</h3>
-            <form onSubmit={handleScheduleMeeting} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Meeting Title
-                </label>
-                <input
-                  type="text"
-                  value={meetingTitle}
-                  onChange={(e) => setMeetingTitle(e.target.value)}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-[#FF6B2C] text-white"
-                  placeholder="Project Kickoff"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-[#FF6B2C] text-white"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Time
-                </label>
-                <input
-                  type="time"
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-[#FF6B2C] text-white"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-[#FF6B2C] to-[#FF8533] text-white font-semibold py-3 rounded-xl hover:shadow-lg transition"
-              >
-                Schedule Meeting
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* --- RE-CONNECTED TRANSITIONS ENGINE --- */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(35px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* CORRECTED PLANETARY ARC REVEAL ENGINE */
+        @keyframes vetraHorizonReveal {
+          from { 
+            opacity: 0; 
+            transform: translate(-50%, 40px) scale(0.95); 
+          }
+          to { 
+            opacity: 1; 
+            transform: translate(-50%, 0) scale(1); 
+          }
+        }
+
+        /* CARD DATA ANIMATION LOADING HOOKS */
+        @keyframes barLoad75 { from { width: 0%; } to { width: 75%; } }
+        @keyframes barLoad50 { from { width: 0%; } to { width: 50%; } }
+        @keyframes barGrowOne { from { height: 0%; } to { height: 35%; } }
+        @keyframes barGrowTwo { from { height: 0%; } to { height: 58%; } }
+        @keyframes barGrowThree { from { height: 0%; } to { height: 85%; } }
+      `}} />
     </div>
   );
 };
-
-// --- Sub-components ---
-const PartnerLogo = ({ name }) => (
-  <div className="text-gray-500 font-semibold text-sm tracking-wider hover:text-[#FF6B2C] transition">
-    {name}
-  </div>
-);
-
-const FeatureCard = ({ icon, title, description, action, onAction }) => (
-  <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 hover:border-[#FF6B2C]/30 hover:-translate-y-1 transition-all duration-300">
-    <div className="text-4xl mb-4">{icon}</div>
-    <h3 className="text-xl font-bold mb-2">{title}</h3>
-    <p className="text-gray-400 text-sm leading-relaxed mb-4">{description}</p>
-    {onAction && (
-      <button
-        onClick={onAction}
-        className="text-[#FF6B2C] text-sm font-semibold hover:underline"
-      >
-        {action} →
-      </button>
-    )}
-  </div>
-);
-
-const ProjectRow = ({ project, progress, team, deadline }) => (
-  <div className="flex flex-col md:flex-row justify-between items-start md:items-center py-4 border-b border-white/5 last:border-0">
-    <div className="flex-1">
-      <h4 className="font-semibold">{project}</h4>
-      <div className="flex gap-4 text-xs text-gray-500 mt-1">
-        <span>{team}</span>
-        <span>Due: {deadline}</span>
-      </div>
-    </div>
-    <div className="flex items-center gap-4 mt-2 md:mt-0">
-      <div className="w-32 bg-white/10 rounded-full h-2">
-        <div
-          className="bg-gradient-to-r from-[#FF6B2C] to-[#FF8533] h-2 rounded-full"
-          style={{ width: `${progress}%` }}
-        ></div>
-      </div>
-      <span className="text-sm font-medium text-[#FF6B2C]">{progress}%</span>
-    </div>
-  </div>
-);
-
-const TeamCard = ({ name, role, img }) => (
-  <div className="bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10 hover:border-[#FF6B2C]/30 transition-all">
-    <div className="h-64 overflow-hidden">
-      <img
-        className="w-full h-full object-cover hover:scale-105 transition duration-500"
-        src={img}
-        alt={name}
-      />
-    </div>
-
-    <div className="p-6 text-center">
-      <h3 className="text-xl font-bold">{name}</h3>
-      <p className="text-gray-400 text-sm mt-1">{role}</p>
-    </div>
-  </div>
-);
 
 export default LandingPage;
