@@ -1,7 +1,5 @@
-from django.test import TestCase
+import pytest
 
-
-class ProjectAppTests(TestCase):
-    def test_placeholder(self):
-        self.assertTrue(True)
-
+@pytest.mark.django_db
+def test_placeholder():
+    assert True
