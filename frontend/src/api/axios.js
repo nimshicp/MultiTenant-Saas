@@ -2,20 +2,18 @@ import axios from "axios";
 
 /**
  * Build backend URL dynamically.
- *
- * Examples:
- * - company = ""        -> http://localhost:8000
- * - company = "myntra"  -> http://myntra.localhost:8000
  */
 const getBaseURL = () => {
   const company = localStorage.getItem("company") || "";
   const cleanedCompany = company.trim().toLowerCase();
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   if (!cleanedCompany) {
-    return "http://localhost:8000";
+    return API_URL;
   }
 
-  return `http://${cleanedCompany}.localhost:8000`;
+  return API_URL;
 };
 
 /**
@@ -23,7 +21,7 @@ const getBaseURL = () => {
  */
 const api = axios.create({
   baseURL: getBaseURL(),
-  withCredentials: true, // Sends HttpOnly refresh token cookie automatically
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -42,7 +40,10 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
 
-    if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+    if (
+      typeof FormData !== "undefined" &&
+      config.data instanceof FormData
+    ) {
       if (typeof config.headers.delete === "function") {
         config.headers.delete("Content-Type");
       } else {
@@ -88,20 +89,17 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Access token expired
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
       localStorage.getItem("access")
     ) {
-      // If another refresh is already in progress, wait for it
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then((token) => {
-            originalRequest.headers.Authorization =
-              `Bearer ${token}`;
+            originalRequest.headers.Authorization = `Bearer ${token}`;
             return api(originalRequest);
           })
           .catch((err) => Promise.reject(err));
@@ -111,7 +109,6 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Browser automatically sends refresh_token HttpOnly cookie
         const response = await axios.post(
           `${getBaseURL()}/api/auth/token/refresh/`,
           {},
@@ -122,29 +119,23 @@ api.interceptors.response.use(
 
         const newAccessToken = response.data.access;
 
-        // Store new access token
         localStorage.setItem("access", newAccessToken);
 
-        // Retry queued requests
         processQueue(null, newAccessToken);
 
-        // Retry original request
         originalRequest.headers.Authorization =
           `Bearer ${newAccessToken}`;
 
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh token expired or invalid
         processQueue(refreshError, null);
 
-        // Clear local storage
         localStorage.removeItem("access");
         localStorage.removeItem("user");
         localStorage.removeItem("company");
         localStorage.removeItem("schema_name");
         localStorage.removeItem("user_type");
 
-        // Redirect to login page
         window.location.href = `${window.location.origin}/login`;
 
         return Promise.reject(refreshError);

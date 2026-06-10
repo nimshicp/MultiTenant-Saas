@@ -4,21 +4,10 @@ import axios from "axios";
 import api from "./axios";
 
 /**
- * Returns backend URL based on company subdomain.
- *
- * Examples:
- * - localhost:5173            -> http://localhost:8000
- * - buildtech.localhost:5173  -> http://buildtech.localhost:8000
- * - abc.localhost:5173        -> http://abc.localhost:8000
+ * Returns backend URL from environment variable.
  */
 export const getBackendUrl = (company = null) => {
-  // If company is explicitly provided, use it
-  if (company && company.trim() !== "") {
-    return `http://${company}.localhost:8000`;
-  }
-
-  // Otherwise use the current hostname automatically
-  return `http://${window.location.hostname}:8000`;
+  return import.meta.env.VITE_API_URL;
 };
 
 /**
@@ -47,14 +36,13 @@ export const login = async ({ email, password }) => {
       password,
     },
     {
-      withCredentials: true, // Accept HttpOnly refresh token cookie
+      withCredentials: true,
       headers: {
         "Content-Type": "application/json",
       },
     }
   );
 
-  // MFA flow (optional for future use)
   if (response.status === 202 && response.data.mfa_required) {
     return response.data;
   }
@@ -62,7 +50,6 @@ export const login = async ({ email, password }) => {
   const access = response.data.tokens.access;
   const user = response.data.data;
 
-  // Use role from backend, or determine based on subdomain if missing
   if (!user.role) {
     user.role =
       user.subdomain === "admin"
@@ -70,15 +57,9 @@ export const login = async ({ email, password }) => {
         : "COMPANY_ADMIN";
   }
 
-  // Save access token and user info
   localStorage.setItem("access", access);
   localStorage.setItem("user", JSON.stringify(user));
 
-  // Save tenant/company identifier for future API calls
-  // Examples:
-  // - admin  -> ""
-  // - abc    -> "abc"
-  // - buildtech -> "buildtech"
   localStorage.setItem(
     "company",
     user.subdomain === "admin" ? "" : user.subdomain
@@ -93,23 +74,18 @@ export const login = async ({ email, password }) => {
 
 /**
  * Logout User
- *
- * Backend clears refresh token cookie.
- * Frontend clears localStorage.
  */
 export const logout = async () => {
   try {
     await api.post("/auth/logout/", {});
   } catch (error) {
-    // Even if backend logout fails, clear frontend session
     console.error("Logout error:", error);
   } finally {
     localStorage.removeItem("access");
     localStorage.removeItem("user");
     localStorage.removeItem("company");
 
-    // Always redirect back to the public (root) domain login page
-    window.location.href = "http://localhost:5173/login?logout=true";
+    window.location.href = `${window.location.origin}/login?logout=true`;
   }
 };
 
@@ -130,10 +106,6 @@ export const getAccessToken = () => {
 
 /**
  * Check Whether User Is Authenticated
- *
- * If access token exists, user is considered logged in.
- * Even if access token is expired, axios interceptor
- * will automatically refresh it using HttpOnly cookie.
  */
 export const isAuthenticated = () => {
   return !!localStorage.getItem("access");
@@ -141,24 +113,15 @@ export const isAuthenticated = () => {
 
 /**
  * Restore Session on Page Reload
- *
- * Purpose:
- * - Called when app starts.
- * - If access token exists, return stored user.
- * - If access token is missing but refresh cookie is still valid,
- *   request a new access token.
- * - If refresh token is expired, clear session and return null.
  */
 export const restoreSession = async () => {
   const user = getCurrentUser();
   const access = getAccessToken();
 
-  // If access token exists, session is already active
   if (access && user) {
     return user;
   }
 
-  // Try to refresh using HttpOnly refresh token cookie
   try {
     const company = localStorage.getItem("company") || null;
 
@@ -176,7 +139,6 @@ export const restoreSession = async () => {
 
     return user;
   } catch (error) {
-    // Refresh token invalid or expired
     localStorage.removeItem("access");
     localStorage.removeItem("user");
     localStorage.removeItem("company");
@@ -190,7 +152,12 @@ export const restoreSession = async () => {
  */
 export const requestPasswordReset = async (email) => {
   const baseURL = getBackendUrl();
-  const response = await axios.post(`${baseURL}/auth/password-reset/`, { email });
+
+  const response = await axios.post(
+    `${baseURL}/auth/password-reset/`,
+    { email }
+  );
+
   return response.data;
 };
 
@@ -199,6 +166,7 @@ export const requestPasswordReset = async (email) => {
  */
 export const verifyMFALogin = async ({ email, code }) => {
   const baseURL = getBackendUrl();
+
   const response = await axios.post(
     `${baseURL}/auth/mfa/verify-login/`,
     { email, code },
@@ -212,24 +180,43 @@ export const verifyMFALogin = async ({ email, code }) => {
   const user = response.data.data;
 
   if (!user.role) {
-    user.role = user.subdomain === "admin" ? "SUPER_ADMIN" : "COMPANY_ADMIN";
+    user.role =
+      user.subdomain === "admin"
+        ? "SUPER_ADMIN"
+        : "COMPANY_ADMIN";
   }
 
   localStorage.setItem("access", access);
   localStorage.setItem("user", JSON.stringify(user));
-  localStorage.setItem("company", user.subdomain === "admin" ? "" : user.subdomain);
+  localStorage.setItem(
+    "company",
+    user.subdomain === "admin" ? "" : user.subdomain
+  );
 
-  return { user, access, message: response.data.message };
+  return {
+    user,
+    access,
+    message: response.data.message,
+  };
 };
 
 /**
  * Confirm Password Reset
  */
-export const confirmPasswordReset = async (token, password, confirm_password) => {
+export const confirmPasswordReset = async (
+  token,
+  password,
+  confirm_password
+) => {
   const baseURL = getBackendUrl();
-  const response = await axios.post(`${baseURL}/auth/password-reset-confirm/${token}/`, { 
-    password, 
-    confirm_password 
-  });
+
+  const response = await axios.post(
+    `${baseURL}/auth/password-reset-confirm/${token}/`,
+    {
+      password,
+      confirm_password,
+    }
+  );
+
   return response.data;
 };

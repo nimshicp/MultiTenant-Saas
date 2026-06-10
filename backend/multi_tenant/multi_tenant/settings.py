@@ -8,11 +8,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SECRET_KEY = 'django-insecure-replace-in-production'
+SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = True
 
 
-ALLOWED_HOSTS = ['.localhost', '127.0.0.1', 'backend', '0.0.0.0']
+ALLOWED_HOSTS = ['.localhost', '127.0.0.1', 'backend', '0.0.0.0','13.127.13.21', ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",

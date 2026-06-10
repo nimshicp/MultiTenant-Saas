@@ -1,7 +1,7 @@
 import api from "./axios";
 
 const getRagBaseUrl = () => {
-  return "http://localhost:8001";
+  return import.meta.env.VITE_RAG_URL;
 };
 
 const getTenantSchemaName = () => {
@@ -61,7 +61,10 @@ export const askRagQuestion = async (question) => {
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
     throw new Error(
-      extractErrorMessage({ response: { data: payload } }, "RAG query failed.")
+      extractErrorMessage(
+        { response: { data: payload } },
+        "RAG query failed."
+      )
     );
   }
 
@@ -93,7 +96,10 @@ export const streamRagQuestion = async ({
   if (!response.ok || !response.body) {
     const payload = await response.json().catch(() => null);
     throw new Error(
-      extractErrorMessage({ response: { data: payload } }, "RAG query failed.")
+      extractErrorMessage(
+        { response: { data: payload } },
+        "RAG query failed."
+      )
     );
   }
 
@@ -133,6 +139,7 @@ export const streamRagQuestion = async ({
 
         if (data) {
           const payload = JSON.parse(data);
+
           if (eventName === "meta" && onMeta) {
             onMeta(payload);
           } else if (eventName === "token" && onToken) {
@@ -158,7 +165,9 @@ export const fetchRagDocuments = async () => {
 };
 
 export const deleteRagDocument = async (documentId) => {
-  const response = await api.delete(`/api/documents/${encodeURIComponent(documentId)}/`);
+  const response = await api.delete(
+    `/api/documents/${encodeURIComponent(documentId)}/`
+  );
   return response.data;
 };
 

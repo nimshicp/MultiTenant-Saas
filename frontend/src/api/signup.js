@@ -3,13 +3,8 @@
 import api from "./axios";
 
 // Public schema signup endpoint
-// This endpoint creates:
-// - Client (Tenant)
-// - Domain
-// - Company Admin user
-// - UserProfile
-// - TenantUserMap
-const PLATFORM_SIGNUP_URL = "http://localhost:8000/auth/register/";
+const PLATFORM_SIGNUP_URL =
+  `${import.meta.env.VITE_API_URL}/auth/register/`;
 
 /**
  * Register a new company.
@@ -56,20 +51,13 @@ export const signupCompany = async (formData) => {
     let errorMessage = "Company registration failed.";
 
     if (errorData) {
-      // Backend returned a plain string
       if (typeof errorData === "string") {
         errorMessage = errorData;
-      }
-      // Backend returned { error: "..." }
-      else if (errorData.error) {
+      } else if (errorData.error) {
         errorMessage = errorData.error;
-      }
-      // Backend returned { detail: "..." }
-      else if (errorData.detail) {
+      } else if (errorData.detail) {
         errorMessage = errorData.detail;
-      }
-      // Django REST Framework field-wise validation errors
-      else {
+      } else {
         errorMessage = Object.entries(errorData)
           .map(([field, errors]) => {
             const text = Array.isArray(errors)
