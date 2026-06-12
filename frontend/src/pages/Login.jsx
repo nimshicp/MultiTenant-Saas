@@ -75,6 +75,7 @@ const Login = () => {
 
   window.location.href =
   `https://multi-tenant-saas-plum.vercel.app${targetPath}`;
+}
 
   const handleSubmit = async (e) => {
     e.preventDefault();
