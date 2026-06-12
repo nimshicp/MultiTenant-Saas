@@ -58,31 +58,24 @@ const Login = () => {
   };
 
   const handleLoginSuccess = (data) => {
-    let targetPath = "/company-dashboard";
-    if (data.user && data.user.role === "SUPERADMIN") {
-      targetPath = "/platform-admin";
-    } else if (data.user && data.user.role === "ADMIN") {
-      targetPath = "/company-dashboard";
-    } else if (data.user && data.user.role === "PROJECT_MANAGER") {
-      targetPath = "/project-manager-dashboard";
-    } else if (data.user && data.user.role === "EMPLOYEE") {
-      targetPath = "/company-dashboard";
-    }
+  let targetPath = "/company-dashboard";
 
-    const expectedSubdomain = data.user.subdomain;
-    const expectedHost = expectedSubdomain === "admin" || !expectedSubdomain
-      ? "localhost"
-      : `${expectedSubdomain}.localhost`;
+  if (data.user?.role === "SUPERADMIN") {
+    targetPath = "/platform-admin";
+  } else if (data.user?.role === "PROJECT_MANAGER") {
+    targetPath = "/project-manager-dashboard";
+  }
 
-    const currentHost = window.location.hostname;
+  const subdomain = data.user?.subdomain;
 
-    if (currentHost !== expectedHost) {
-      const userStr = encodeURIComponent(JSON.stringify(data.user));
-      window.location.href = `http://${expectedHost}:5173${targetPath}?access=${data.access}&user=${userStr}`;
-    } else {
-      navigate(targetPath);
-    }
-  };
+  if (!subdomain || subdomain === "admin") {
+    navigate(targetPath);
+    return;
+  }
+
+  window.location.href =
+    `https://${subdomain}.multitenantsaas.duckdns.org${targetPath}`;
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();

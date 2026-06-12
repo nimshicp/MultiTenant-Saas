@@ -7,13 +7,11 @@ const getBaseURL = () => {
   const company = localStorage.getItem("company") || "";
   const cleanedCompany = company.trim().toLowerCase();
 
-  const API_URL = import.meta.env.VITE_API_URL;
-
   if (!cleanedCompany) {
-    return API_URL;
+    return "https://multitenantsaas.duckdns.org";
   }
 
-  return API_URL;
+  return `https://${cleanedCompany}.multitenantsaas.duckdns.org`;
 };
 
 /**
