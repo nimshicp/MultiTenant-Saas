@@ -7,10 +7,10 @@ const getChatBackendBaseURL = () => {
   const cleanedCompany = company.trim().toLowerCase();
 
   if (!cleanedCompany) {
-    return "http://localhost:8000";
+    return "https://multitenantsaas.duckdns.org";
   }
 
-  return `http://${cleanedCompany}.localhost:8000`;
+  return `https://${cleanedCompany}.multitenantsaas.duckdns.org`;
 };
 
 const ChatPage = () => {

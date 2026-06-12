@@ -58,7 +58,8 @@ const Signup = () => {
       };
 
       const result = await signupCompany(registrationPayload);
-      setSuccess(`${result.message} Subdomain: ${result.subdomain}.localhost`);
+      setSuccess(
+  `${result.message} Login URL: https://${result.subdomain}.multitenantsaas.duckdns.org`);
       setTimeout(() => { navigate("/login"); }, 2500);
     } catch (err) {
       setError(err.message || "Registration failed.");
