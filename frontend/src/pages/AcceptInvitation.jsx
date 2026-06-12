@@ -21,11 +21,18 @@ const AcceptInvitation = () => {
   useEffect(() => {
     const fetchInvitation = async () => {
       try {
-        const res = await axios.get(`http://${window.location.hostname}:8000/employee/accept-invitation/${token}/`);
+        const res = await axios.get(
+          `https://bridgeon.multitenantsaas.duckdns.org/api/employee/accept-invitation/${token}/`,
+        );
         setInvitation(res.data);
-        setFormData(prev => ({ ...prev, full_name: res.data.full_name || "" }));
+        setFormData((prev) => ({
+          ...prev,
+          full_name: res.data.full_name || "",
+        }));
       } catch (err) {
-        setError(err?.response?.data?.detail || "Invalid or expired invitation link.");
+        setError(
+          err?.response?.data?.detail || "Invalid or expired invitation link.",
+        );
       } finally {
         setLoading(false);
       }
@@ -48,7 +55,10 @@ const AcceptInvitation = () => {
     setError("");
 
     try {
-      await axios.post(`http://${window.location.hostname}:8000/employee/accept-invitation/${token}/complete/`, formData);
+      await axios.post(
+        `https://bridgeon.multitenantsaas.duckdns.org/api/employee/accept-invitation/${token}/complete/`,
+        formData,
+      );
       setSuccess("Account set up successfully! Redirecting to login...");
       setTimeout(() => navigate("/login"), 3000);
     } catch (err) {
@@ -67,7 +77,9 @@ const AcceptInvitation = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
-        <div className="text-[#FF6B2C] font-bold tracking-[0.5em] animate-pulse uppercase">PROCESSING INVITATION...</div>
+        <div className="text-[#FF6B2C] font-bold tracking-[0.5em] animate-pulse uppercase">
+          PROCESSING INVITATION...
+        </div>
       </div>
     );
   }
@@ -82,35 +94,48 @@ const AcceptInvitation = () => {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-xl relative z-10">
         <div className="bg-white/5 backdrop-blur-xl py-12 px-10 shadow-2xl rounded-[40px] border border-white/10">
-          
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#FF6B2C] to-[#FF8533] rounded-[24px] shadow-xl shadow-[#FF6B2C]/20 mb-6">
               <span className="text-white text-3xl font-bold italic">B</span>
             </div>
-            <h2 className="text-4xl font-bold tracking-tighter italic mb-2">ACCEPT INVITATION</h2>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em]">Complete your account setup</p>
+            <h2 className="text-4xl font-bold tracking-tighter italic mb-2">
+              ACCEPT INVITATION
+            </h2>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em]">
+              Complete your account setup
+            </p>
           </div>
 
           {error && (
-            <div className="mb-8 p-5 rounded-2xl bg-red-500/10 border border-red-500/20 text-[10px] font-bold text-red-400 uppercase tracking-widest text-center">{error}</div>
+            <div className="mb-8 p-5 rounded-2xl bg-red-500/10 border border-red-500/20 text-[10px] font-bold text-red-400 uppercase tracking-widest text-center">
+              {error}
+            </div>
           )}
 
           {success && (
-            <div className="mb-8 p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400 uppercase tracking-widest text-center">{success}</div>
+            <div className="mb-8 p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400 uppercase tracking-widest text-center">
+              {success}
+            </div>
           )}
 
           {!success && invitation && (
             <>
               <div className="mb-10 p-6 bg-white/5 border border-white/10 rounded-[32px] text-center">
-                <p className="text-xs text-gray-400 uppercase tracking-widest mb-1 font-bold">Company</p>
-                <h3 className="text-xl font-bold text-[#FF6B2C] tracking-tighter">{invitation.company_name || "Nexus Core"}</h3>
+                <p className="text-xs text-gray-400 uppercase tracking-widest mb-1 font-bold">
+                  Company
+                </p>
+                <h3 className="text-xl font-bold text-[#FF6B2C] tracking-tighter">
+                  {invitation.company_name || "Nexus Core"}
+                </h3>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2">Full Name</label>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2">
+                        Full Name
+                      </label>
                       <input
                         type="text"
                         name="full_name"
@@ -122,7 +147,9 @@ const AcceptInvitation = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2">Email Address</label>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2">
+                        Email Address
+                      </label>
                       <input
                         type="email"
                         value={invitation?.email || ""}
@@ -134,7 +161,9 @@ const AcceptInvitation = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2">Password</label>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2">
+                        Password
+                      </label>
                       <input
                         type="password"
                         name="password"
@@ -147,7 +176,9 @@ const AcceptInvitation = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2">Confirm Password</label>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2">
+                        Confirm Password
+                      </label>
                       <input
                         type="password"
                         name="confirm_password"
@@ -172,10 +203,15 @@ const AcceptInvitation = () => {
               </form>
             </>
           )}
-          
+
           {error && !invitation && (
             <div className="text-center mt-6">
-              <button onClick={() => navigate("/login")} className="text-[#FF6B2C] font-bold uppercase tracking-widest text-[10px] hover:text-white transition-colors">Go back to login terminal</button>
+              <button
+                onClick={() => navigate("/login")}
+                className="text-[#FF6B2C] font-bold uppercase tracking-widest text-[10px] hover:text-white transition-colors"
+              >
+                Go back to login terminal
+              </button>
             </div>
           )}
         </div>
