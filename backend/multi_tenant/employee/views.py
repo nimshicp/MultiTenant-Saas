@@ -40,7 +40,7 @@ class InviteEmployeeAPIView(APIView):
         )
 
         subdomain = request.tenant.schema_name.replace('tenant_', '')
-        frontend_url = f"http://{subdomain}.localhost:5173/accept-invitation/{invitation.token}"
+        frontend_url = f"https://multi-tenant-saas-plum.vercel.app/accept-invitation/{invitation.token}"
 
         send_mail(
             subject=f"Invitation to join {request.tenant.name}",
