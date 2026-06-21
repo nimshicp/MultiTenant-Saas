@@ -209,6 +209,6 @@ pytest
 
 ## Notes
 
-- The backend is configured for tenant-aware routing with `django-tenants`.
+- The backend is configured for tenant-aware routing with  django-tenants`.
 - Document Q&A uses tenant schema names so each company sees only its own data.
 - The frontend stores auth state in `localStorage` and refreshes access tokens automatically when needed.
